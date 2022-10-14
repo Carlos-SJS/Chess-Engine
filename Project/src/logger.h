@@ -1,6 +1,7 @@
 #include<iostream>
 #include<time.h>
 #include<windows.h>
+#include "BitUtil.h"
 using namespace std;
 
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
@@ -16,6 +17,7 @@ class Logger{
         static void success(string);
         static string get_time();
         static void init();
+        static void printbboard(bitboard);
 };
 
 extern Logger logger;

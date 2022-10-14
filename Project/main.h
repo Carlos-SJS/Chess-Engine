@@ -22,6 +22,11 @@
 using namespace std;
 
 Engine engine;
+vector<vector<int>> set_of_moves;
+int boardtc[8][8];
+int colortc[8][8];
+bool calculate_moves_flag = 1;
+
 
 class GameRenderer{
     private:
@@ -32,7 +37,7 @@ class GameRenderer{
         const int SCREEN_HEIGHT = CELL_SIZE * 8 + TDBORDER_SIZE * 2;
         const int SCREEN_WIDTH = CELL_SIZE * 8 + LRBORDER_SIZE * 2;
 
-        const int PIZE_OFFSET = CELL_SIZE/10 + ((CELL_SIZE/10)&1);
+        const int PIZE_OFFSET = CELL_SIZE/8 + ((CELL_SIZE/8)&1);
 
         TTF_Font* font;
         SDL_Color text_color = {220,220,220};
@@ -51,7 +56,7 @@ class GameRenderer{
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
-                           {0, 0, 0, 0, 0, 0, 0, 0},
+                           {0, 4, 0, 0, 0, 0, 0, 0},
                            {1, 1, 1, 1, 1, 1, 1, 1},
                            {4, 3, 2, 5, 6, 2, 3, 4}};
         //0 -> void, 1 -> white, 2 -> black
@@ -60,7 +65,7 @@ class GameRenderer{
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
-                           {0, 0, 0, 0, 0, 0, 0, 0},
+                           {0, 2, 0, 0, 0, 0, 0, 0},
                            {1, 1, 1, 1, 1, 1, 1, 1},
                            {1, 1, 1, 1, 1, 1, 1, 1}};
         
@@ -90,6 +95,8 @@ class GameRenderer{
         void renderer_loop();
         void send_move();
         void set_values(SDL_Renderer *);
+
+        void copy_matrix();
 
         //Drawing functions
         void draw_board(SDL_Renderer *);

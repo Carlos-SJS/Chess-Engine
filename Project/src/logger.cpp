@@ -48,3 +48,16 @@ void Logger::init(){
     consoleMode |= DISABLE_NEWLINE_AUTO_RETURN;
     SetConsoleMode(handleOut, consoleMode);
 }
+
+void Logger::printbboard(bitboard b){
+    cout << "\x1b[90m" << get_time() << " \x1b[0m:\x1b[46m LOG (BitBoard) \x1b[0m: " << b << "\n";
+    string board[8];
+    for(int i=0; i<8; i++){
+        board[i] = "";
+        for(int j=0; j<8; j++){
+            board[i] += (b&1ULL)?"1":".";
+            b=(b>>1);
+        }
+    }
+    for(int i=7; i>=0; i--) cout << "\t\t\t" << board[i] << "\n";
+}

@@ -12,8 +12,8 @@ using namespace std;
 #define getb(a, i) ((a)&(1ULL << i))
 #define clearb(a, i) ((a)&=~(1ULL << i))
 #define lsb(a) (__builtin_ctzll(a))
-#define bb_sq(a) (__builtin_clz(a))
-#define sq_cd(a) (make_pair((a>>3), a-(a>>3)))
+#define bb_sq(a) (__builtin_ctzll(a))
+#define sq_cd(a) (make_pair((a>>3), a-((a>>3)<<3)))
 
 #define getbboard(y, x) (1ULL << ((y<<3)+x))
 
