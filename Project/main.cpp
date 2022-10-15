@@ -20,7 +20,7 @@ void GameRenderer::draw_pieces(SDL_Renderer *rend){
     } 
 }
 
-void GameRenderer::draw_moves(SDL_Renderer *rend){
+void GameRenderer::draw_moves(SDL_Renderer *rend){ 
     for(auto move: moves[move_to_draw]){
         pair<int, int> c = sq_cd(move);
         //logger.log(to_string(move) + " -> " + to_string(c.cY) + ", " + to_string(c.cX));
@@ -119,23 +119,31 @@ void GameRenderer::renderer_loop(){
                 if(turn == 0 && need_move_update == 0){
                     int mouseX = event.motion.x - LRBORDER_SIZE;
                     int mouseY = event.motion.y - TDBORDER_SIZE;
+
                     if(mouseX >= 0 && mouseX < CELL_SIZE*8 && mouseY >= 0 && mouseY < CELL_SIZE*8){
                         mouseY = 7-mouseY/CELL_SIZE;
                         mouseX /= CELL_SIZE;
-                        logger.log("Mouse down at " + to_string(mouseX) + " " + to_string(mouseY));
+                        int moveid = (mouseY<<3)+mouseX;
+                        logger.log("Mouse down at " + to_string(mouseX) + " " + to_string(mouseY) + " (" + to_string(moveid) + ")");
+                        if(moves_set.find(moveid) != moves_set.end()){
+                            logger.log("Move selected");
 
-                        if(moves[(mouseY<<3)+mouseX].size()) rend_moves = 1, move_to_draw = (mouseY<<3)+mouseX;
-                        else rend_moves = 0;
+                            pair<int, int> m_from = sq_cd(move_to_draw);
+                            pair<int, int> m_to = sq_cd(moveid);
+                            board[7 - m_to.cY][m_to.cX] = board[7 - m_from.cY][m_from.cX];
+                            color[7 - m_to.cY][m_to.cX] = color[7 - m_from.cY][m_from.cX];
+                            board[7 - m_from.cY][m_from.cX] = 0;
+                            color[7 - m_from.cY][m_from.cX] = 0;
 
-                        /*for(int i=0; i<64; i++){
-                            cout << i << ": ";
-                            for(int j=0; j<moves[i].size(); j++){
-                                cout << moves[i][j] << " ";
-                            }
-                            cout << '\n';
-                        }*/
-
-                        //Check if the click is in a move is also needed
+                            moves_set.clear();
+                            request_move_updtae();
+                        }else if(moves[moveid].size() && move_to_draw != moveid){
+                            moves_set.clear();
+                            for(auto move: moves[moveid])
+                                moves_set.insert(move);
+                                
+                            rend_moves = 1, move_to_draw = moveid;
+                        }else if(move_to_draw != moveid) rend_moves = 0;
 
                     }else rend_moves = 0;
                 }
@@ -166,6 +174,15 @@ void GameRenderer::renderer_loop(){
     TTF_Quit();
     // close SDL
     SDL_Quit();
+}
+
+void GameRenderer::request_move_updtae(){
+    move_to_draw = -1;
+    rend_moves = 0;
+    need_move_update = 1;
+    for(int i=0; i<8; i++) for(int j=0; j<8; j++) boardtc[i][j] = board[i][j];
+    for(int i=0; i<8; i++) for(int j=0; j<8; j++) colortc[i][j] = color[i][j];
+    calculate_moves_flag = 1;
 }
 
 void GameRenderer::set_values(SDL_Renderer *rend){

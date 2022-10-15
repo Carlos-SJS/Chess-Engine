@@ -1,14 +1,16 @@
 #include <iostream>
+#include <utility>
+#include <pthread.h>
+
 #include <SDL_IMAGE.h>
 #include <SDL_TTF.h>
 #include <SDL.h>
-#include <map>
-#include <vector>
-#include <utility>
-#include <string>
-#include <pthread.h>
 
+#include <vector>
+#include <map>
+#include <set>
 #include<string>
+
 #include <windows.h>
 #include <Lmcons.h>
 #include <locale>
@@ -56,7 +58,7 @@ class GameRenderer{
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
-                           {0, 4, 0, 0, 0, 0, 0, 0},
+                           {0, 0, 0, 0, 0, 0, 0, 0},
                            {1, 1, 1, 1, 1, 1, 1, 1},
                            {4, 3, 2, 5, 6, 2, 3, 4}};
         //0 -> void, 1 -> white, 2 -> black
@@ -65,7 +67,7 @@ class GameRenderer{
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
-                           {0, 2, 0, 0, 0, 0, 0, 0},
+                           {0, 0, 0, 0, 0, 0, 0, 0},
                            {1, 1, 1, 1, 1, 1, 1, 1},
                            {1, 1, 1, 1, 1, 1, 1, 1}};
         
@@ -90,6 +92,8 @@ class GameRenderer{
         bool rend_moves = 0;
         int move_to_draw = 0;
 
+        set<int> moves_set;
+
     public:
         void init();
         void renderer_loop();
@@ -104,6 +108,8 @@ class GameRenderer{
         void load_files(SDL_Renderer *);
 
         void draw_moves(SDL_Renderer *);
+
+        void request_move_updtae();
 };
 
 struct RendererException: public exception {

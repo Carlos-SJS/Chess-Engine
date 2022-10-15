@@ -173,8 +173,8 @@ namespace Generator{
         //White Pawns
         for(auto pawn: b.w_pieces[0]){
             if(white_pawn_move_t[bb_sq(pawn)])
-                if((white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
-                    moves.moves.push_back({pawn, white_pawn_move_t[bb_sq(pawn)]});
+                if((white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) > pawn<<8 || (white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
+                    moves.moves.push_back({pawn, white_pawn_move_t[bb_sq(pawn)] & ~(b.black|b.white)});
 
             if(white_pawn_capture_t[bb_sq(pawn)]&b.black)
                 moves.captures.push_back({pawn, white_pawn_capture_t[bb_sq(pawn)] & b.black});
