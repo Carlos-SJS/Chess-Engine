@@ -1,10 +1,14 @@
+#pragma once
+
 #include <iostream>
 #include <utility>
 #include <pthread.h>
 
+#include <SDL.h>
 #include <SDL_IMAGE.h>
 #include <SDL_TTF.h>
-#include <SDL.h>
+#include <SDL_mixer.h>
+
 
 #include <vector>
 #include <map>
@@ -20,6 +24,7 @@
 
 #include "src/Engine.h"
 #include "src/BitUtil.h"
+#include "src/AudioSample.h"
 
 using namespace std;
 
@@ -45,11 +50,11 @@ class GameRenderer{
         SDL_Color text_color = {220,220,220};
         SDL_Texture* human_text;
         SDL_Texture* bot_text;
-        
 
-        //Creating engine obj
-        //Engine engine;
-
+        //Sound stuff
+        audio_sample audio_move;
+        audio_sample audio_capture;
+        audio_sample audio_check;
 
         //Chessboard reprecentaction data 
         //0 -> void, 1 -> pawn, 2 -> knight, 3 -> bishop, 4 -> rook, 5 -> queen, 6 -> king
@@ -71,6 +76,8 @@ class GameRenderer{
                            {1, 1, 1, 1, 1, 1, 1, 1},
                            {1, 1, 1, 1, 1, 1, 1, 1}};
         
+        //Square name to array position
+        //Not used
         map<string, pair<int, int>> position {{"A1", {7,0}}, {"A2", {7,1}}, {"A3", {7,2}}, {"A4", {7,3}}, {"A5", {7,4}}, {"A6", {7,5}}, {"A7", {7,6}}, {"A8", {7,7}},
                                               {"B1", {6,0}}, {"B2", {6,1}}, {"B3", {6,2}}, {"B4", {6,3}}, {"B5", {6,4}}, {"B6", {6,5}}, {"B7", {6,6}}, {"B8", {6,7}},
                                               {"C1", {5,0}}, {"C2", {5,1}}, {"C3", {5,2}}, {"C4", {5,3}}, {"C5", {5,4}}, {"C6", {5,5}}, {"C7", {5,6}}, {"C8", {5,7}},  
@@ -80,6 +87,8 @@ class GameRenderer{
                                               {"G1", {1,0}}, {"G2", {1,1}}, {"G3", {1,2}}, {"G4", {1,3}}, {"G5", {1,4}}, {"G6", {1,5}}, {"G7", {1,6}}, {"G8", {1,7}},
                                               {"H1", {0,0}}, {"H2", {0,1}}, {"H3", {0,2}}, {"H4", {0,3}}, {"H5", {0,4}}, {"H6", {0,5}}, {"H7", {0,6}}, {"H8", {0,7}}
                                             };
+        
+        //Sprites and images used in gae
         vector<SDL_Texture *> sprites;
         SDL_Surface* window_icon;
 
@@ -95,23 +104,23 @@ class GameRenderer{
         set<int> moves_set;
 
     public:
+        //Rendererd initilizer
         void init();
+
+        //Renderer main loop
         void renderer_loop();
-        void send_move();
-        void set_values(SDL_Renderer *);
-
-        void copy_matrix();
-
+        
         //Drawing functions
         void draw_board(SDL_Renderer *);
         void draw_pieces(SDL_Renderer *);
-        void load_files(SDL_Renderer *);
-
         void draw_moves(SDL_Renderer *);
 
-        void request_move_updtae();
-};
+        //Data loading/handling
+        void load_files(SDL_Renderer *);
+        void set_values(SDL_Renderer *);
 
-struct RendererException: public exception {
-    const char* what() const throw();
+        //Engine comunication
+        void copy_matrix();
+        void request_move_updtae();
+        void send_move();
 };

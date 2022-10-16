@@ -1,6 +1,8 @@
 #include "main.h"
 #include "src/logger.h"
 
+//audio_sample audio_move("../Resources/Sound/game/move.wav", 1);
+
 //Implementing Game Renderer Methodes
 void GameRenderer::draw_pieces(SDL_Renderer *rend){
     try{
@@ -89,6 +91,13 @@ void GameRenderer::renderer_loop(){
     //Creates SDL Renderer
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
 
+    //Initializing SDL audio mixer for audio handling
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) < 0) {
+        logger.error("An error ocurred while initializing audio mixer");
+    }
+
+    // Amount of channels (Max amount of sounds playing at the same time)
+    //Mix_AllocateChannels(2);
 
     bool lpressed = 0, rpressed = 0, mpressed = 0;
     // controls animation loop
@@ -130,12 +139,17 @@ void GameRenderer::renderer_loop(){
 
                             pair<int, int> m_from = sq_cd(move_to_draw);
                             pair<int, int> m_to = sq_cd(moveid);
+
+                            if(board[7 - m_to.cY][m_to.cX]) audio_capture.play();
+                            else audio_move.play();
+
                             board[7 - m_to.cY][m_to.cX] = board[7 - m_from.cY][m_from.cX];
                             color[7 - m_to.cY][m_to.cX] = color[7 - m_from.cY][m_from.cX];
                             board[7 - m_from.cY][m_from.cX] = 0;
                             color[7 - m_from.cY][m_from.cX] = 0;
 
                             moves_set.clear();
+
                             request_move_updtae();
                         }else if(moves[moveid].size() && move_to_draw != moveid){
                             moves_set.clear();
@@ -143,9 +157,9 @@ void GameRenderer::renderer_loop(){
                                 moves_set.insert(move);
                                 
                             rend_moves = 1, move_to_draw = moveid;
-                        }else if(move_to_draw != moveid) rend_moves = 0;
+                        }else if(move_to_draw != moveid) rend_moves = 0, move_to_draw = -1, moves_set.clear();
 
-                    }else rend_moves = 0;
+                    }else rend_moves = 0, move_to_draw = -1, moves_set.clear();
                 }
                 break;
             }
@@ -169,7 +183,7 @@ void GameRenderer::renderer_loop(){
     // destroy window
     SDL_DestroyWindow(win);
      
-    
+    Mix_CloseAudio();
     	
     TTF_Quit();
     // close SDL
@@ -209,6 +223,11 @@ void GameRenderer::set_values(SDL_Renderer *rend){
 
     human_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Human", text_color));
     bot_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Computer", text_color));
+
+    audio_move.set_file("Resources/Sound/game/move.wav");
+    audio_capture.set_file("Resources/Sound/game/capture.wav");
+    audio_check.set_file("Resources/Sound/game/check.wav");
+
 }
 
 void GameRenderer::load_files(SDL_Renderer *rend){
