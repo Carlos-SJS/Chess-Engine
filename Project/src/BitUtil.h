@@ -13,6 +13,7 @@ using namespace std;
 #define clearb(a, i) ((a)&=~(1ULL << i))
 #define lsb(a) (__builtin_ctzll(a))
 #define bb_sq(a) (__builtin_ctzll(a))
+#define bb_isq(a) (63-bb_sq(a))
 #define sq_cd(a) (make_pair((a>>3), a-((a>>3)<<3)))
 
 #define getbboard(y, x) (1ULL << ((y<<3)+x))
@@ -26,11 +27,12 @@ using namespace std;
 typedef unsigned long long u64;
 typedef u64 bitboard;
 typedef vector<bitboard> boardset;
+typedef pair<pair<int, int>, bitboard> move_pair;
 
 struct moveset{
     int color;
-    vector<pair<bitboard, bitboard>> moves;
-    vector<pair<bitboard, bitboard>> captures;
+    vector<pair<pair<int, int>, bitboard>> moves;
+    vector<pair<pair<int, int>, bitboard>> captures;
 };
 
 struct board{
@@ -43,5 +45,6 @@ struct board{
         b_pieces.resize(6);
     }
 };
+
 
 #endif

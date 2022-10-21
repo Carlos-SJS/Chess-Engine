@@ -1,6 +1,6 @@
 CC = g++
 
-OBJS = main.cpp src/logger.cpp src/Engine.cpp src/Generator.cpp src/Evaluator.cpp src/AudioSample.cpp resources.res 
+OBJS = main.cpp src/logger.cpp  src/Generator.cpp src/Evaluator.cpp src/AudioSample.cpp src/Engine.cpp resources.res 
 #  SDL2_gfx/SDL2_gfxPrimitives.c SDL2_gfx/SDL2_rotozoom.c 
 
 # -w (suppresses all warnings)

@@ -97,7 +97,7 @@ void GameRenderer::renderer_loop(){
     }
 
     // Amount of channels (Max amount of sounds playing at the same time)
-    //Mix_AllocateChannels(2);
+    Mix_AllocateChannels(8);
 
     bool lpressed = 0, rpressed = 0, mpressed = 0;
     // controls animation loop
@@ -114,7 +114,6 @@ void GameRenderer::renderer_loop(){
     logger.log("Main loop starting");
     while (!close) {
         SDL_Event event;
-        //if(turn == 0 && need_move_update) moves = engine.getMoves(board, color), need_move_update = 0;
  
         // Events management
         while (SDL_PollEvent(&event)) {
@@ -148,9 +147,12 @@ void GameRenderer::renderer_loop(){
                             board[7 - m_from.cY][m_from.cX] = 0;
                             color[7 - m_from.cY][m_from.cX] = 0;
 
-                            moves_set.clear();
+                            //Pawn auto promotes to queen
+                            if(m_to.cY == 7 && board[7 - m_to.cY][m_to.cX] == 1) board[7 - m_to.cY][m_to.cX] = 5;
 
-                            request_move_updtae();
+                            moves_set.clear();
+                            request_engine_move();
+                            //request_move_update();
                         }else if(moves[moveid].size() && move_to_draw != moveid){
                             moves_set.clear();
                             for(auto move: moves[moveid])
@@ -169,6 +171,27 @@ void GameRenderer::renderer_loop(){
             moves = set_of_moves;
             need_move_update = 0;
         }
+
+        if(turn && !engine_move_flag && waiting_engine_move){
+            pair<int, int> f, t;
+            f = sq_cd(engine_move.first);
+            t = sq_cd(engine_move.second);
+
+            if(board[7 - t.first][t.second]) audio_capture.play();
+            else audio_move.play();
+
+            board[7 - t.first][t.second] = board[7 - f.first][f.second];
+            color[7 - t.first][t.second] = color[7 - f.first][f.second];
+            board[7 - f.first][f.second] = 0;
+            color[7 - f.first][f.second] = 0;
+
+            if(t.first == 7 && board[7 - t.first][t.second] == 1) board[7 - t.first][t.second] = 5;
+
+            turn = 0;
+            waiting_engine_move = 0;
+            request_move_update();
+        }
+
         draw_board(rend);
 
         SDL_RenderPresent(rend);
@@ -190,13 +213,25 @@ void GameRenderer::renderer_loop(){
     SDL_Quit();
 }
 
-void GameRenderer::request_move_updtae(){
+void GameRenderer::request_move_update(){
     move_to_draw = -1;
     rend_moves = 0;
     need_move_update = 1;
     for(int i=0; i<8; i++) for(int j=0; j<8; j++) boardtc[i][j] = board[i][j];
     for(int i=0; i<8; i++) for(int j=0; j<8; j++) colortc[i][j] = color[i][j];
     calculate_moves_flag = 1;
+}
+
+void GameRenderer::request_engine_move(){
+    rend_moves = 0;
+    move_to_draw = -1;
+    
+    for(int i=0; i<8; i++) for(int j=0; j<8; j++) boardtc[i][j] = board[i][j];
+    for(int i=0; i<8; i++) for(int j=0; j<8; j++) colortc[i][j] = color[i][j];
+
+    engine_move_flag = 1;
+    waiting_engine_move = 1;
+    turn = 1;
 }
 
 void GameRenderer::set_values(SDL_Renderer *rend){
@@ -301,10 +336,6 @@ int main(int argc, char *argv[]){
     thread_response = pthread_create(&renderer_thread, NULL, &run_renderer, NULL);
     if(thread_response != 0) logger.error("Couldn't initialize the renderer thread");
 
-    /*GameRenderer grend;
-    logger.log("Initializing Renderer thread");
-    grend.init();
-    logger.error("Renderer closed");*/
     SDL_Delay(100);
     while(true){
 
@@ -313,6 +344,11 @@ int main(int argc, char *argv[]){
             logger.log("Calculating moves for renderer");
             set_of_moves = engine.getMoves(boardtc, colortc);
             calculate_moves_flag = 0;
+        }
+
+        if(engine_move_flag){
+            engine_move = engine.get_engine_move(boardtc, colortc);
+            engine_move_flag = 0;
         }
 
         SDL_Delay(1000/120);

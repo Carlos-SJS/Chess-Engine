@@ -23,6 +23,8 @@ namespace Generator{
 
     board array_to_board(int cboard[8][8], int color[8][8]);
 
+    board sim_board(board, move_pair, int);
+
     const string knight_file = "data/knight_moves.bitboard";
     const string king_file = "data/king_moves.bitboard";
     const string white_pawn_file = "data/white_pawn.bitboard";

@@ -13,7 +13,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include<string>
+#include <string>
 
 #include <windows.h>
 #include <Lmcons.h>
@@ -32,7 +32,11 @@ Engine engine;
 vector<vector<int>> set_of_moves;
 int boardtc[8][8];
 int colortc[8][8];
+
+pair<int, int> engine_move;
+
 bool calculate_moves_flag = 1;
+bool engine_move_flag = 0;
 
 
 class GameRenderer{
@@ -58,14 +62,14 @@ class GameRenderer{
 
         //Chessboard reprecentaction data 
         //0 -> void, 1 -> pawn, 2 -> knight, 3 -> bishop, 4 -> rook, 5 -> queen, 6 -> king
-        int board[8][8] = {{4, 3, 2, 5, 6, 2, 3, 4},
+        int board[8][8] = {{4, 2, 3, 5, 6, 3, 2, 4},
                            {1, 1, 1, 1, 1, 1, 1, 1},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {1, 1, 1, 1, 1, 1, 1, 1},
-                           {4, 3, 2, 5, 6, 2, 3, 4}};
+                           {4, 2, 3, 5, 6, 3, 2, 4}};
         //0 -> void, 1 -> white, 2 -> black
         int color[8][8] = {{2, 2, 2, 2, 2, 2, 2, 2},
                            {2, 2, 2, 2, 2, 2, 2, 2},
@@ -96,6 +100,7 @@ class GameRenderer{
         vector<vector<int>> moves;
         int turn= 0;
         bool need_move_update = 1;
+        bool waiting_engine_move = 0;
 
         //Rendering data
         bool rend_moves = 0;
@@ -103,10 +108,7 @@ class GameRenderer{
 
         set<int> moves_set;
 
-    public:
-        //Rendererd initilizer
-        void init();
-
+        //Methodes
         //Renderer main loop
         void renderer_loop();
         
@@ -121,6 +123,11 @@ class GameRenderer{
 
         //Engine comunication
         void copy_matrix();
-        void request_move_updtae();
+        void request_engine_move();
+        void request_move_update();
         void send_move();
+
+    public:
+        //Rendererd initilizer
+        void init();
 };

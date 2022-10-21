@@ -171,13 +171,16 @@ namespace Generator{
         moves.color = 1;
 
         //White Pawns
-        for(auto pawn: b.w_pieces[0]){
-            if(white_pawn_move_t[bb_sq(pawn)])
-                if((white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) > pawn<<8 || (white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
-                    moves.moves.push_back({pawn, white_pawn_move_t[bb_sq(pawn)] & ~(b.black|b.white)});
+        for(int i=0; i<b.w_pieces[0].size(); i++){
+            if(b.w_pieces[0][i] & b.white){
+                auto pawn = b.w_pieces[0][i];
+                if(white_pawn_move_t[bb_sq(pawn)])
+                    if((white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) > pawn<<8 || (white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
+                        moves.moves.push_back({{0, i}, white_pawn_move_t[bb_sq(pawn)] & ~(b.black|b.white)});
 
-            if(white_pawn_capture_t[bb_sq(pawn)]&b.black)
-                moves.captures.push_back({pawn, white_pawn_capture_t[bb_sq(pawn)] & b.black});
+                if(white_pawn_capture_t[bb_sq(pawn)]&b.black)
+                    moves.captures.push_back({{0, i}, white_pawn_capture_t[bb_sq(pawn)] & b.black});
+            }
         }
         return moves;
     }
@@ -185,17 +188,20 @@ namespace Generator{
     //Get moves for black
     moveset get_moves_b(board b){
         // 0 -> pawn, 1 -> knight, 2 -> bishop, 3 -> rook, 4 -> queen, 5 -> king   
-        moveset moves = get_moves(b.w_pieces, b.white, b.black);
+        moveset moves = get_moves(b.b_pieces, b.black, b.white);
         moves.color = 1;
 
         //Black Pawns
-        for(auto pawn: b.b_pieces[0]){
-            if(black_pawn_move_t[bb_sq(pawn)])
-                if((black_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
-                    moves.moves.push_back({pawn, black_pawn_move_t[bb_sq(pawn)]});
+        for(int i=0; i<b.b_pieces[0].size(); i++){
+            if(b.b_pieces[0][i] & b.black){
+                auto pawn = b.b_pieces[0][i];
+                if(black_pawn_move_t[bb_sq(pawn)])
+                    if((black_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
+                        moves.moves.push_back({{0, i}, black_pawn_move_t[bb_sq(pawn)]});
 
-            if(black_pawn_capture_t[bb_sq(pawn)]&b.white)
-                moves.captures.push_back({pawn, black_pawn_capture_t[bb_sq(pawn)] & b.white});
+                if(black_pawn_capture_t[bb_sq(pawn)]&b.white)
+                    moves.captures.push_back({{0, i}, black_pawn_capture_t[bb_sq(pawn)] & b.white});
+            }
         }
 
         return moves;
@@ -207,43 +213,58 @@ namespace Generator{
         bitboard m,c;
 
         //Knight
-        for(auto p: pieces[1]){
-            m = get_knight_moves(p, (own|other));
-            c = get_knight_captures(p, other);
-            if(m) moves.moves.push_back({p, m});
-            if(c) moves.captures.push_back({p, c});
+        for(int i=0; i<pieces[1].size(); i++){
+            if(pieces[1][i] & own){
+                auto p = pieces[1][i];
+                m = get_knight_moves(p, (own|other));
+                c = get_knight_captures(p, other);
+                if(m) moves.moves.push_back({{1, i}, m});
+                if(c) moves.captures.push_back({{1, i}, c});
+            }
         }
 
         //Bishop
-        for(auto p: pieces[2]){
-            m = get_bishop_moves(p, (own|other));
-            c = get_bishop_captures(p, other, own);
-            if(m) moves.moves.push_back({p, m});
-            if(c) moves.captures.push_back({p, c});
+        for(int i=0; i<pieces[2].size(); i++){
+            if(pieces[2][i] & own){
+                auto p = pieces[2][i];
+                m = get_bishop_moves(p, (own|other));
+                c = get_bishop_captures(p, other, own);
+                if(m) moves.moves.push_back({{2,i}, m});
+                if(c) moves.captures.push_back({{2,i}, c});
+            }
         }
 
         //Rook
-        for(auto p: pieces[3]){
-            m = get_rook_moves(p, (own|other));
-            c = get_rook_captures(p, other, own);
-            if(m) moves.moves.push_back({p, m});
-            if(c) moves.captures.push_back({p, c});
+        for(int i=0; i<pieces[3].size(); i++){
+            if(pieces[3][i] & own){
+                auto p = pieces[3][i];
+                m = get_rook_moves(p, (own|other));
+                c = get_rook_captures(p, other, own);
+                if(m) moves.moves.push_back({{3,i}, m});
+                if(c) moves.captures.push_back({{3,i}, c});
+            }
         }
 
         //Queen
-        for(auto p: pieces[4]){
-            m = get_queen_moves(p, (own|other));
-            c = get_queen_captures(p, other, own);
-            if(m) moves.moves.push_back({p, m});
-            if(c) moves.captures.push_back({p, c});
+        for(int i=0; i<pieces[4].size(); i++){
+            if(pieces[4][i] & own){
+                auto p = pieces[4][i];
+                m = get_queen_moves(p, (own|other));
+                c = get_queen_captures(p, other, own);
+                if(m) moves.moves.push_back({{4,i}, m});
+                if(c) moves.captures.push_back({{4,i}, c});
+            }
         }
 
         //King
-        for(auto p: pieces[5]){
-            m = get_king_moves(p, (own|other));
-            c = get_king_captures(p, other);
-            if(m) moves.moves.push_back({p, m});
-            if(c) moves.captures.push_back({p, c});
+        for(int i=0; i<pieces[5].size(); i++){
+            if(pieces[5][i] & own){
+                auto p = pieces[5][i];
+                m = get_king_moves(p, (own|other));
+                c = get_king_captures(p, other);
+                if(m) moves.moves.push_back({{5,i}, m});
+                if(c) moves.captures.push_back({{5,i}, c});
+            }
         }
 
         return moves;
@@ -358,6 +379,48 @@ namespace Generator{
                 } 
 
         return bd;
+    }
+
+    board sim_board(board b, move_pair m, int color){
+        if(color == 1){ //White
+            b.white &= ~b.w_pieces[m.from.first][m.from.second];
+            b.black &= ~m.to;
+            b.white |= m.to;
+
+            if(m.from.first == 0 && m.from.second >= (1ULL<<55)){ //Queen promotion
+                b.w_pieces[4].push_back(m.to);
+                swap(b.w_pieces[0][m.from.second], b.w_pieces[0][b.w_pieces[0].size()-1]);
+                b.w_pieces[0].pop_back();
+            }
+            b.w_pieces[m.from.first][m.from.second] = m.to;
+        }else{ //Black
+            b.black &= ~b.b_pieces[m.from.first][m.from.second];
+            b.white &= ~m.to;
+            b.black |= m.to;
+
+            if(m.from.first == 0 && m.from.second >= (1ULL<<55)){ //Queen promotion
+                b.b_pieces[4].push_back(m.to);
+                swap(b.b_pieces[0][m.from.second], b.b_pieces[0][b.b_pieces[0].size()-1]);
+                b.b_pieces[0].pop_back();
+            }
+            b.b_pieces[m.from.first][m.from.second] = m.to;
+        }
+
+        /*
+        for(int i=0; i<b.w_pieces.size(); i++){
+            for(auto it=b.w_pieces[i].begin(); it != b.w_pieces[i].end(); it++){
+                if(b.white & *it == 0) b.w_pieces[i].erase(it); 
+            }
+        }
+
+        for(int i=0; i<b.b_pieces.size(); i++){
+            for(auto it=b.b_pieces[i].begin(); it != b.b_pieces[i].end(); it++){
+                if(b.black & *it == 0) b.b_pieces[i].erase(it); 
+            }
+        }
+        */
+
+        return b;
     }
 
 }
