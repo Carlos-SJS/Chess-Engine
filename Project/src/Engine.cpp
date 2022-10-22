@@ -1,5 +1,6 @@
 #include "Engine.h"
 #include "logger.h"
+#include "BitUtil.h"
 #include "Evaluator.h"
 
 Engine::Engine(){
@@ -133,7 +134,12 @@ pair<int, int> Engine::get_engine_move(int cboard[8][8], int color[8][8]){
     for(int i=0; i<moves.moves.size(); i++){
         move_pair move = moves.moves[i];
         while(move.to > 0){
-            v = Search::alphabeta(Generator::sim_board(b, make_pair(move.from, 1ULL << lsb(move.to)), 2), SEARCH_DEEPNESS,INT_MIN, INT_MAX, 1);
+            //logger.warning("Printing debug board and move");
+            //logger.printbboard(b.white | b.black);
+            //logger.printbboard(1ULL<<lsb(move.to));
+            //logger.printbboard(Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2).white | Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2).black);
+            //logger.printbboard(b.white | b.black);
+            v = Search::alphabeta(Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2), SEARCH_DEEPNESS,INT_MIN, INT_MAX, 1);
             if(v < move_value){
                 move_value = v;
                 best =  i; c = 0;
@@ -173,6 +179,8 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         for(auto it = moves.captures.begin(); it!=moves.captures.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
+                //logger.printbboard(bd.white|bd.black);
+                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).black);
                 value = max(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1), depth-1, alpha, beta, 0));
                 if(value >= beta){
                     cutoff = 1;
@@ -185,6 +193,8 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         if(!cutoff)for(auto it = moves.moves.begin(); it!=moves.moves.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
+                //logger.printbboard(bd.white|bd.black);
+                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).black);
                 value = max(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1), depth-1, alpha, beta, 0));
                 if(value >= beta)break;
                 alpha = max(alpha, value);
@@ -204,6 +214,8 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         for(auto it = moves.captures.begin(); it!=moves.captures.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
+                //logger.printbboard(bd.white|bd.black);
+                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).black);
                 value = min(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2), depth-1, alpha, beta, 1));
                 if(value <= alpha){
                     cutoff = 1;
@@ -216,6 +228,8 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         if(!cutoff)for(auto it = moves.moves.begin(); it!=moves.moves.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
+                //logger.printbboard(bd.white|bd.black);
+                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).black);
                 value = min(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2), depth-1, alpha, beta, 1));
                 if(value <= alpha)break;
                 beta = min(beta, value);

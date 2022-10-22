@@ -382,9 +382,19 @@ namespace Generator{
     }
 
     board sim_board(board b, move_pair m, int color){
-        if(clearb(m.to, lsb(m.to))) logger.warning("Move with more than one position!");
+        if((m.to&(~(1ULL<<lsb(m.to)))) != 0){
+            logger.warning("Move with more than one position!");
+            logger.printbboard(m.to);
+        }
+        
+        //logger.warning("Board in simboard");
+        //logger.printbboard(b.white|b.black);
 
         if(color == 1){ //White
+            //logger.log("Apliying move to white");
+            //logger.printbboard(b.w_pieces[m.from.first][m.from.second]);
+            //logger.printbboard(m.to);
+
             b.white &= ~b.w_pieces[m.from.first][m.from.second];
             b.black &= ~m.to;
             b.white |= m.to;
@@ -396,9 +406,15 @@ namespace Generator{
                 b.w_pieces[0].pop_back();
             }else b.w_pieces[m.from.first][m.from.second] = m.to;
         }else{ //Black
+            //logger.log("Apliying move to black");
+            //logger.printbboard(b.b_pieces[m.from.first][m.from.second]);
+            //logger.printbboard(m.to);
+
             b.black &= ~b.b_pieces[m.from.first][m.from.second];
             b.white &= ~m.to;
             b.black |= m.to;
+
+            //b.b_pieces[m.from.first][m.from.second] = m.to;
 
             if(m.from.first == 0 && m.from.second < (1ULL<<8) && 0){ //Queen promotion
                 logger.warning("Queening stuff");
@@ -429,7 +445,7 @@ namespace Generator{
             }
         }
         
-
+        //logger.printbboard(b.white|b.black);
         return b;
     }
 

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <unordered_map>
 #include "Generator.h"
+#include "BitUtil.h"
 
 using namespace std;
 
