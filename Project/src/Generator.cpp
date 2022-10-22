@@ -382,43 +382,53 @@ namespace Generator{
     }
 
     board sim_board(board b, move_pair m, int color){
+        if(clearb(m.to, lsb(m.to))) logger.warning("Move with more than one position!");
+
         if(color == 1){ //White
             b.white &= ~b.w_pieces[m.from.first][m.from.second];
             b.black &= ~m.to;
             b.white |= m.to;
 
-            if(m.from.first == 0 && m.from.second >= (1ULL<<55)){ //Queen promotion
+            if(m.from.first == 0 && m.from.second >= (1ULL<<55) && 0){ //Queen promotion
+                logger.warning("Queening stuff");
                 b.w_pieces[4].push_back(m.to);
                 swap(b.w_pieces[0][m.from.second], b.w_pieces[0][b.w_pieces[0].size()-1]);
                 b.w_pieces[0].pop_back();
-            }
-            b.w_pieces[m.from.first][m.from.second] = m.to;
+            }else b.w_pieces[m.from.first][m.from.second] = m.to;
         }else{ //Black
             b.black &= ~b.b_pieces[m.from.first][m.from.second];
             b.white &= ~m.to;
             b.black |= m.to;
 
-            if(m.from.first == 0 && m.from.second >= (1ULL<<55)){ //Queen promotion
+            if(m.from.first == 0 && m.from.second < (1ULL<<8) && 0){ //Queen promotion
+                logger.warning("Queening stuff");
                 b.b_pieces[4].push_back(m.to);
                 swap(b.b_pieces[0][m.from.second], b.b_pieces[0][b.b_pieces[0].size()-1]);
                 b.b_pieces[0].pop_back();
-            }
-            b.b_pieces[m.from.first][m.from.second] = m.to;
+            }else b.b_pieces[m.from.first][m.from.second] = m.to;
         }
 
-        /*
+        
         for(int i=0; i<b.w_pieces.size(); i++){
-            for(auto it=b.w_pieces[i].begin(); it != b.w_pieces[i].end(); it++){
-                if(b.white & *it == 0) b.w_pieces[i].erase(it); 
+            for(int j=0; j < b.w_pieces[i].size(); j++){
+                if((b.white & b.w_pieces[i][j]) == 0){
+                    swap(b.w_pieces[i][b.w_pieces[i].size()-1], b.w_pieces[i][j]);
+                    b.w_pieces[i].pop_back();
+                    j--;
+                }
             }
         }
 
         for(int i=0; i<b.b_pieces.size(); i++){
-            for(auto it=b.b_pieces[i].begin(); it != b.b_pieces[i].end(); it++){
-                if(b.black & *it == 0) b.b_pieces[i].erase(it); 
+            for(auto j=0; j < b.b_pieces[i].size(); j++){
+                if((b.black & b.b_pieces[i][j]) == 0){
+                    swap(b.b_pieces[i][b.b_pieces[i].size()-1], b.b_pieces[i][j]);
+                    b.b_pieces[i].pop_back();
+                    j--;
+                }
             }
         }
-        */
+        
 
         return b;
     }

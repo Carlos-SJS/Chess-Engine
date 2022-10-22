@@ -29,11 +29,10 @@ namespace Evaluator{
             }
 
             // Values
-            board_value += pieces[3].size()*ROOK_VALUE;
             for(auto p: pieces[3]){
                 if(p&b.white == 0) continue;
                 board_value += ROOK_VALUE_TABLE[bb_isq(p)];
-
+            	board_value += ROOK_VALUE;
             }
             //Queen Values
             for(auto p: pieces[4]){
@@ -54,7 +53,7 @@ namespace Evaluator{
             for(auto p: pieces[0]){
                 if(p&b.black == 0) continue;
                 board_value += PAWN_VALUE_TABLE[bb_sq(p)];
-                board_value = PAWN_VALUE;
+                board_value += PAWN_VALUE;
             }
             //Knight Values
             for(auto p: pieces[1]){

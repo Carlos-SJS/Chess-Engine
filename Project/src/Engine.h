@@ -8,7 +8,7 @@ using namespace std;
 
 class Engine{
     private:
-        const int SEARCH_DEEPNESS = 5;
+        const int SEARCH_DEEPNESS = 3;
 
         const string BBOARD_SQUARE_FILE = "../data/sq_to_bboard.bitboard";
     public:
@@ -18,6 +18,7 @@ class Engine{
         void init();
         vector<vector<int>> getMoves(int cboard[8][8], int color[8][8]);
         pair<int, int> get_engine_move(int cboard[8][8], int color[8][8]);
+        int get_array_eval(int cboard[8][8], int color[8][8]);
 };
 
 namespace Search{

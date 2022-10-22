@@ -169,6 +169,9 @@ void GameRenderer::renderer_loop(){
 
         if(need_move_update && !calculate_moves_flag){
             moves = set_of_moves;
+
+            
+
             need_move_update = 0;
         }
 
@@ -185,7 +188,7 @@ void GameRenderer::renderer_loop(){
             board[7 - f.first][f.second] = 0;
             color[7 - f.first][f.second] = 0;
 
-            if(t.first == 7 && board[7 - t.first][t.second] == 1) board[7 - t.first][t.second] = 5;
+            if(t.first == 0 && board[7 - t.first][t.second] == 1) board[7 - t.first][t.second] = 5;
 
             turn = 0;
             waiting_engine_move = 0;
@@ -344,6 +347,8 @@ int main(int argc, char *argv[]){
             logger.log("Calculating moves for renderer");
             set_of_moves = engine.getMoves(boardtc, colortc);
             calculate_moves_flag = 0;
+           
+            logger.log("Board eval (white): " + to_string(engine.get_array_eval(boardtc, colortc)));
         }
 
         if(engine_move_flag){
