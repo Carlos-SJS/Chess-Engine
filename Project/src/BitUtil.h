@@ -14,7 +14,7 @@ using namespace std;
 #define lsb(a) (__builtin_ctzll(a))
 #define bb_sq(a) (__builtin_ctzll(a))
 #define bb_isq(a) (63-bb_sq(a))
-#define sq_cd(a) (make_pair((a>>3), a-((a>>3)<<3)))
+#define sq_cd(a) (make_pair((a>>3), a%8))
 
 #define getbboard(y, x) (1ULL << ((y<<3)+x))
 
@@ -33,11 +33,20 @@ struct moveset{
     int color;
     vector<pair<pair<int, int>, bitboard>> moves;
     vector<pair<pair<int, int>, bitboard>> captures;
+
+    bitboard attacks;
 };
 
 struct board{
     bitboard white;
     bitboard black;
+
+    bool left_white_castle;
+    bool right_white_castle;
+
+    bool left_black_castle;
+    bool right_black_castle;
+
     vector<boardset> w_pieces;
     vector<boardset> b_pieces;
     board(){

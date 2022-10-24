@@ -38,6 +38,8 @@ pair<int, int> engine_move;
 bool calculate_moves_flag = 1;
 bool engine_move_flag = 0;
 
+void handle_gstate(int);
+
 
 class GameRenderer{
     private:

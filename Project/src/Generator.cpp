@@ -178,8 +178,10 @@ namespace Generator{
                     if((white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) > pawn<<8 || (white_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
                         moves.moves.push_back({{0, i}, white_pawn_move_t[bb_sq(pawn)] & ~(b.black|b.white)});
 
-                if(white_pawn_capture_t[bb_sq(pawn)]&b.black)
+                if(white_pawn_capture_t[bb_sq(pawn)]&b.black){
                     moves.captures.push_back({{0, i}, white_pawn_capture_t[bb_sq(pawn)] & b.black});
+                    moves.attacks |= white_pawn_capture_t[bb_sq(pawn)] & b.black;
+                }
             }
         }
         return moves;
@@ -189,18 +191,21 @@ namespace Generator{
     moveset get_moves_b(board b){
         // 0 -> pawn, 1 -> knight, 2 -> bishop, 3 -> rook, 4 -> queen, 5 -> king   
         moveset moves = get_moves(b.b_pieces, b.black, b.white);
-        moves.color = 1;
+        moves.color = 2;
 
         //Black Pawns
         for(int i=0; i<b.b_pieces[0].size(); i++){
             if(b.b_pieces[0][i] & b.black){
                 auto pawn = b.b_pieces[0][i];
                 if(black_pawn_move_t[bb_sq(pawn)])
-                    if((black_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
-                        moves.moves.push_back({{0, i}, black_pawn_move_t[bb_sq(pawn)]});
+                    if((black_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) < pawn>>8 || (black_pawn_move_t[bb_sq(pawn)] & (b.black|b.white)) == 0)
+                        moves.moves.push_back({{0, i}, black_pawn_move_t[bb_sq(pawn)] & ~(b.black|b.white)});
 
-                if(black_pawn_capture_t[bb_sq(pawn)]&b.white)
+                if(black_pawn_capture_t[bb_sq(pawn)]&b.white){
                     moves.captures.push_back({{0, i}, black_pawn_capture_t[bb_sq(pawn)] & b.white});
+
+                    moves.attacks |= black_pawn_capture_t[bb_sq(pawn)] & b.white;
+                }
             }
         }
 
@@ -212,6 +217,8 @@ namespace Generator{
         moveset moves;
         bitboard m,c;
 
+        moves.attacks = 0ULL;
+
         //Knight
         for(int i=0; i<pieces[1].size(); i++){
             if(pieces[1][i] & own){
@@ -220,6 +227,8 @@ namespace Generator{
                 c = get_knight_captures(p, other);
                 if(m) moves.moves.push_back({{1, i}, m});
                 if(c) moves.captures.push_back({{1, i}, c});
+
+                moves.attacks |= c;
             }
         }
 
@@ -231,6 +240,8 @@ namespace Generator{
                 c = get_bishop_captures(p, other, own);
                 if(m) moves.moves.push_back({{2,i}, m});
                 if(c) moves.captures.push_back({{2,i}, c});
+
+                moves.attacks |= c;
             }
         }
 
@@ -242,6 +253,8 @@ namespace Generator{
                 c = get_rook_captures(p, other, own);
                 if(m) moves.moves.push_back({{3,i}, m});
                 if(c) moves.captures.push_back({{3,i}, c});
+
+                moves.attacks |= c;
             }
         }
 
@@ -253,6 +266,8 @@ namespace Generator{
                 c = get_queen_captures(p, other, own);
                 if(m) moves.moves.push_back({{4,i}, m});
                 if(c) moves.captures.push_back({{4,i}, c});
+
+                moves.attacks |= c;
             }
         }
 
@@ -264,6 +279,8 @@ namespace Generator{
                 c = get_king_captures(p, other);
                 if(m) moves.moves.push_back({{5,i}, m});
                 if(c) moves.captures.push_back({{5,i}, c});
+
+                moves.attacks |= c;
             }
         }
 
@@ -273,33 +290,25 @@ namespace Generator{
 
     //Get moves for Knight (Precalculated)
     bitboard get_knight_moves(bitboard knight, bitboard other){
-        bitboard moves = knight_move_t[bb_sq(knight)] & ~other;
-        //Is needed to check if the moves are leagal (if the kniwght is not pinned to the king)
-        //Could be avoided if we don't check if the move is legal and take a king captura as the best move in search 
-        //(Could be bad for performance but probably not that much since we have to check it anyway)
+        bitboard moves = (knight_move_t[bb_sq(knight)] & (~other));
         return moves;
     }
 
     //Get capture moves for Knight (Precalculated)
     bitboard get_knight_captures(bitboard knight, bitboard other){
         bitboard moves = knight_move_t[bb_sq(knight)] & other;
-        //Is needed to check if the moves are leagal (if the kniwght is not pinned to the king)
-        //Could be avoided if we don't check if the move is legal and take a king captura as the best move in search 
-        //(Could be bad for performance but probably not that much since we have to check it anyway)
         return moves;
     }
 
     //Get moves for King (Precalculated)
     bitboard get_king_moves(bitboard king, bitboard other){
         bitboard moves = king_move_t[bb_sq(king)] & ~other;
-        //Keep in mid is not being checked if it is a legal move
         return moves;
     }
 
     //Get capture moves for King (Precalculated)
     bitboard get_king_captures(bitboard king, bitboard other){
         bitboard moves = king_move_t[bb_sq(king)] & other;
-        //Keep in mid is not being checked if it is a legal move
         return moves;
     }
 
@@ -312,7 +321,7 @@ namespace Generator{
         
         bitboard moves = bishop_move_t[bb_sq(bishop)][key];
         moves &= ~other;
-        //We are not considering legality of the move!
+
         return moves;
     }
 
@@ -325,7 +334,7 @@ namespace Generator{
         
         bitboard moves = bishop_move_t[bb_sq(bishop)][key];
         moves &= other;
-        //We are not considering legality of the move!
+
         return moves;
     }
 
@@ -338,7 +347,7 @@ namespace Generator{
         
         bitboard moves = rook_move_t[square][key];
         moves &= ~other;
-        //We are not considering legality of the move!
+
         return moves;
     }
 
@@ -351,7 +360,7 @@ namespace Generator{
         
         bitboard moves = rook_move_t[bb_sq(rook)][key];
         moves &= other;
-        //We are not considering legality of the move!
+
         return moves;
     }
 
@@ -386,15 +395,8 @@ namespace Generator{
             logger.warning("Move with more than one position!");
             logger.printbboard(m.to);
         }
-        
-        //logger.warning("Board in simboard");
-        //logger.printbboard(b.white|b.black);
 
         if(color == 1){ //White
-            //logger.log("Apliying move to white");
-            //logger.printbboard(b.w_pieces[m.from.first][m.from.second]);
-            //logger.printbboard(m.to);
-
             b.white &= ~b.w_pieces[m.from.first][m.from.second];
             b.black &= ~m.to;
             b.white |= m.to;
@@ -406,15 +408,9 @@ namespace Generator{
                 b.w_pieces[0].pop_back();
             }else b.w_pieces[m.from.first][m.from.second] = m.to;
         }else{ //Black
-            //logger.log("Apliying move to black");
-            //logger.printbboard(b.b_pieces[m.from.first][m.from.second]);
-            //logger.printbboard(m.to);
-
             b.black &= ~b.b_pieces[m.from.first][m.from.second];
             b.white &= ~m.to;
             b.black |= m.to;
-
-            //b.b_pieces[m.from.first][m.from.second] = m.to;
 
             if(m.from.first == 0 && m.from.second < (1ULL<<8) && 0){ //Queen promotion
                 logger.warning("Queening stuff");
@@ -424,7 +420,7 @@ namespace Generator{
             }else b.b_pieces[m.from.first][m.from.second] = m.to;
         }
 
-        
+        //Eliminating ghost white pieces (Can be optimized)
         for(int i=0; i<b.w_pieces.size(); i++){
             for(int j=0; j < b.w_pieces[i].size(); j++){
                 if((b.white & b.w_pieces[i][j]) == 0){
@@ -435,8 +431,9 @@ namespace Generator{
             }
         }
 
+        //Eliminating ghost black pieces (Can be optimized)
         for(int i=0; i<b.b_pieces.size(); i++){
-            for(auto j=0; j < b.b_pieces[i].size(); j++){
+            for(int j=0; j < b.b_pieces[i].size(); j++){
                 if((b.black & b.b_pieces[i][j]) == 0){
                     swap(b.b_pieces[i][b.b_pieces[i].size()-1], b.b_pieces[i][j]);
                     b.b_pieces[i].pop_back();
@@ -445,7 +442,6 @@ namespace Generator{
             }
         }
         
-        //logger.printbboard(b.white|b.black);
         return b;
     }
 

@@ -13,6 +13,7 @@ using namespace std;
 class audio_sample{
     private:
         Mix_Chunk *chunk;
+        string file;
     public:
         audio_sample(){}
         audio_sample(const string path);

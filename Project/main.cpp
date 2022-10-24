@@ -132,14 +132,15 @@ void GameRenderer::renderer_loop(){
                         mouseY = 7-mouseY/CELL_SIZE;
                         mouseX /= CELL_SIZE;
                         int moveid = (mouseY<<3)+mouseX;
-                        logger.log("Mouse down at " + to_string(mouseX) + " " + to_string(mouseY) + " (" + to_string(moveid) + ")");
+                        //logger.log("Mouse down at " + to_string(mouseX) + " " + to_string(mouseY) + " (" + to_string(moveid) + ")");
                         if(moves_set.find(moveid) != moves_set.end()){
-                            logger.log("Move selected");
+                            logger.log("Player move selected");
 
                             pair<int, int> m_from = sq_cd(move_to_draw);
                             pair<int, int> m_to = sq_cd(moveid);
 
-                            if(board[7 - m_to.cY][m_to.cX]) audio_capture.play();
+                            if(engine.in_check(2, board, color)) audio_check.play();
+                            else if(board[7 - m_to.cY][m_to.cX]) audio_capture.play();
                             else audio_move.play();
 
                             board[7 - m_to.cY][m_to.cX] = board[7 - m_from.cY][m_from.cX];
@@ -151,6 +152,7 @@ void GameRenderer::renderer_loop(){
                             if(m_to.cY == 7 && board[7 - m_to.cY][m_to.cX] == 1) board[7 - m_to.cY][m_to.cX] = 5;
 
                             moves_set.clear();
+
                             request_engine_move();
                             //request_move_update();
                         }else if(moves[moveid].size() && move_to_draw != moveid){
@@ -169,9 +171,6 @@ void GameRenderer::renderer_loop(){
 
         if(need_move_update && !calculate_moves_flag){
             moves = set_of_moves;
-
-            
-
             need_move_update = 0;
         }
 
@@ -180,7 +179,8 @@ void GameRenderer::renderer_loop(){
             f = sq_cd(engine_move.first);
             t = sq_cd(engine_move.second);
 
-            if(board[7 - t.first][t.second]) audio_capture.play();
+            if(engine.in_check(1, board, color)) audio_check.play();
+            else if(board[7 - t.first][t.second]) audio_capture.play();
             else audio_move.play();
 
             board[7 - t.first][t.second] = board[7 - f.first][f.second];
@@ -238,27 +238,6 @@ void GameRenderer::request_engine_move(){
 }
 
 void GameRenderer::set_values(SDL_Renderer *rend){
-    /* Stuff to get username
-    char username[1024];
-    DWORD username_len = 1024;
-    GetUserNameA(username,&username_len);
-    
-
-    int length = mbstowcs(nullptr, username, 0);
-
-    // Allocate a temporary string
-    wchar_t* tmpstr = new wchar_t[length + 1];
-
-    // Do the actual conversion
-    mbstowcs(tmpstr, username, length + 1);
-
-    wstring w_username = tmpstr;
-
-
-    wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
-    string user_name = converter.to_bytes(w_username);
-    */
-
     human_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Human", text_color));
     bot_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Computer", text_color));
 
@@ -328,6 +307,15 @@ void* run_renderer(void* arg){
     logger.error("Renderer closed");
 }
 
+void handle_gstate(int s){
+    if(s == 1) logger.success("White has won");
+    else if(s == 2) logger.success("Black has won");
+    else if(s==3) logger.success("Draw :o");
+    else logger.error("Something went wrong :c");
+
+    while(true);
+}
+
 int main(int argc, char *argv[]){
     logger.init();
     logger.log("Main function running");
@@ -344,16 +332,28 @@ int main(int argc, char *argv[]){
 
         //Update moves for renderer
         if(calculate_moves_flag){
-            logger.log("Calculating moves for renderer");
-            set_of_moves = engine.getMoves(boardtc, colortc);
-            calculate_moves_flag = 0;
-           
-            logger.log("Board eval (white): " + to_string(engine.get_array_eval(boardtc, colortc)));
+            int state =  engine.board_state(boardtc, colortc, 1);
+
+            if(state != 0){
+                handle_gstate(state);
+            }else{
+                logger.log("Calculating moves for renderer");
+                set_of_moves = engine.getMoves(boardtc, colortc);
+                calculate_moves_flag = 0;
+            
+                logger.log("Board eval (white): " + to_string(engine.get_array_eval(boardtc, colortc)));
+            }
         }
 
         if(engine_move_flag){
-            engine_move = engine.get_engine_move(boardtc, colortc);
-            engine_move_flag = 0;
+            int state =  engine.board_state(boardtc, colortc, 2);
+
+            if(state != 0){
+                handle_gstate(state);
+            }else{
+                engine_move = engine.get_engine_move(boardtc, colortc);
+                engine_move_flag = 0;
+            }
         }
 
         SDL_Delay(1000/120);

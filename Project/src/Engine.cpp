@@ -19,34 +19,23 @@ void Engine::init(){
     for(int i=0; i<64; i++){
         bbsq >> ign >> b;
         bboard_square[b] = i;
-    }*/
-
-    /*int boardc[8][8] = {{4, 2, 3, 5, 6, 3, 2, 4},
-                           {1, 1, 1, 1, 1, 1, 1, 1},
-                           {0, 0, 0, 0, 0, 0, 0, 0},
-                           {0, 0, 0, 0, 0, 0, 0, 0},
-                           {0, 0, 0, 0, 0, 0, 0, 0},
-                           {0, 0, 0, 0, 0, 0, 0, 0},
-                           {1, 1, 1, 1, 1, 1, 1, 1},
-                           {4, 2, 3, 5, 6, 3, 2, 4}};
-    //0 -> void, 1 -> white, 2 -> black
-    int color[8][8] = {{2, 2, 2, 2, 2, 2, 2, 2},
-                        {2, 2, 2, 2, 2, 2, 2, 2},
-                        {0, 0, 0, 0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0, 0, 0, 0},
-                        {0, 0, 0, 0, 0, 0, 0, 0},
-                        {1, 1, 1, 1, 1, 1, 1, 1},
-                        {1, 1, 1, 1, 1, 1, 1, 1}};
-
-    board bd = Generator::array_to_board(boardc, color);
-    moveset m = Generator::get_moves_w(bd);
-    move_pair move = m.moves[3];
-    board sb = Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(clearb(move.to, lsb(move.to)))), 1);
-    logger.printbboard(sb.white|sb.black);*/
-    
+    }*/    
 
     logger.success("Engine succesfully initialized");
+}
+
+bool Engine::is_legal(board b, move_pair m, int c){
+    if(c == 1){
+        b = Generator::sim_board(b, m, c);
+        moveset moves = Generator::get_moves_b(b);
+
+        return ((b.w_pieces[5][0]&moves.attacks)==0);
+    }else{
+        b = Generator::sim_board(b, m, c);
+        moveset moves = Generator::get_moves_w(b);
+
+        return ((b.b_pieces[5][0]&moves.attacks)==0);
+    }
 }
 
 vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8]){
@@ -55,17 +44,14 @@ vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8]){
     board b = Generator::array_to_board(cboard, color);
     moveset moves = Generator::get_moves_w(b);
 
-    //logger.log(to_string(bb_sq(moves.moves[3].from)));
-    //logger.printbboard(moves.moves[3].from);
-    //logger.printbboard(moves.moves[3].to);
-
-
     vector<vector<int>> move_list(64);
+    
+
     for(int i=0; i<moves.moves.size(); i++){
         int piece = bb_sq(b.w_pieces[moves.moves[i].from.first][moves.moves[i].from.second]);
         bitboard move = moves.moves[i].to;
         while(move){
-            move_list[piece].push_back(bb_sq(move));
+            if(is_legal(b, make_pair(moves.moves[i].from, (1ULL<<lsb(move))), 1)) move_list[piece].push_back(bb_sq(move));
             clearb(move, lsb(move));
         }
     }
@@ -74,7 +60,7 @@ vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8]){
         int piece = bb_sq(b.w_pieces[moves.captures[i].from.first][moves.captures[i].from.second]);
         bitboard move = moves.captures[i].to;
         while(move){
-            move_list[piece].push_back(bb_sq(move));
+            if(is_legal(b, make_pair(moves.captures[i].from, (1ULL<<lsb(move))), 1)) move_list[piece].push_back(bb_sq(move));
             clearb(move, lsb(move));
         }
     }
@@ -104,28 +90,37 @@ vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8]){
     }
     */
 
-
-
     return move_list;
 }
 
 pair<int, int> Engine::get_engine_move(int cboard[8][8], int color[8][8]){
     logger.log("Calculating engine move");
-
+    
     board b = Generator::array_to_board(cboard, color);
     moveset moves = Generator::get_moves_b(b);
     
     bool c = 0;
     int best = 0,v;
+    bitboard best_to = 0ULL;
     int move_value = INT_MAX;
     
+    int alpha = INT_MIN;
+    int beta = INT_MAX;
+
+    bool cutoff = 0;
+
+
     for(int i=0; i<moves.captures.size(); i++){
         move_pair move = moves.captures[i];
         while(move.to > 0){
-            v = Search::alphabeta(Generator::sim_board(b, make_pair(move.from, 1ULL << lsb(move.to)), 2), SEARCH_DEEPNESS,INT_MIN, INT_MAX, 1);
-            if(v < move_value){
-                move_value = v;
-                best =  i; c = 1;
+            if(is_legal(b, make_pair(move.from, (1ULL << lsb(move.to))), 2)){
+                v = Search::alphabeta(Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2), SEARCH_DEEPNESS,alpha, beta, 1);
+                beta = min(beta, v);
+                if(v < move_value){
+                    move_value = v;
+                    best =  i; c = 1;
+                    best_to = 1ULL<<lsb(move.to);
+                }
             }
             clearb(move.to, lsb(move.to));
         }
@@ -134,15 +129,14 @@ pair<int, int> Engine::get_engine_move(int cboard[8][8], int color[8][8]){
     for(int i=0; i<moves.moves.size(); i++){
         move_pair move = moves.moves[i];
         while(move.to > 0){
-            //logger.warning("Printing debug board and move");
-            //logger.printbboard(b.white | b.black);
-            //logger.printbboard(1ULL<<lsb(move.to));
-            //logger.printbboard(Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2).white | Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2).black);
-            //logger.printbboard(b.white | b.black);
-            v = Search::alphabeta(Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2), SEARCH_DEEPNESS,INT_MIN, INT_MAX, 1);
-            if(v < move_value){
-                move_value = v;
-                best =  i; c = 0;
+            if(is_legal(b, make_pair(move.from, (1ULL << lsb(move.to))), 2)){
+                v = Search::alphabeta(Generator::sim_board(b, make_pair(move.from, (1ULL << lsb(move.to))), 2), SEARCH_DEEPNESS,INT_MIN, INT_MAX, 1);
+                beta = min(beta, v);
+                if(v < move_value){
+                    move_value = v;
+                    best =  i; c = 0;
+                    best_to = 1ULL<<lsb(move.to);
+                }
             }
             clearb(move.to, lsb(move.to));
         }
@@ -150,38 +144,43 @@ pair<int, int> Engine::get_engine_move(int cboard[8][8], int color[8][8]){
 
     logger.log("Engine move calculated!, expected value: " + to_string(move_value));
 
-    if(c) return {bb_sq(b.b_pieces[moves.captures[best].from.first][moves.captures[best].from.second]) ,bb_sq(moves.captures[best].to)};
-    else return {bb_sq(b.b_pieces[moves.moves[best].from.first][moves.moves[best].from.second]) ,bb_sq(moves.moves[best].to)}; 
+    /*logger.log("Engine move: ");
+    if(c){
+        logger.printbboard(b.b_pieces[moves.captures[best].from.first][moves.captures[best].from.second]);
+        logger.printbboard(best_to);
+    }else{
+        logger.printbboard(b.b_pieces[moves.moves[best].from.first][moves.moves[best].from.second]);
+        logger.printbboard(best_to);
+    }*/
+
+    if(c) return {bb_sq(b.b_pieces[moves.captures[best].from.first][moves.captures[best].from.second]) ,bb_sq(best_to)};
+    else return {bb_sq(b.b_pieces[moves.moves[best].from.first][moves.moves[best].from.second]) ,bb_sq(best_to)}; 
 }
 
 int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
-    //logger.log("Alpha beta call");
 
     if(depth == 0){
-        //Return static board eval (quicense search ideally required)
-        //logger.log("Evaluating position");
         return Evaluator::get_board_eval(bd, 1) - Evaluator::get_board_eval(bd, 2);
     }
+    
+    //Check mate (White)
+    if(bd.b_pieces[5].size() == 0) return INT_MAX;
+    //Check mate (black)
+    if(bd.w_pieces[5].size() == 0) return INT_MIN;
 
-    /*Check if position is in transposition table
-    if(0){
-
-    }
-    */
 
     if(maximize){
-        //logger.log("Maximizing at depth " + to_string(depth));
-
         int value = INT_MIN;
         boolean cutoff=0;
         moveset moves = Generator::get_moves_w(bd);
+
+        //Draw 
+        if(moves.moves.size() + moves.captures.size() == 0) return 0;
         //Could use move ordering euristcs here
         for(auto it = moves.captures.begin(); it!=moves.captures.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
-                //logger.printbboard(bd.white|bd.black);
-                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).black);
-                value = max(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1), depth-1, alpha, beta, 0));
+                value = max(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, (1ULL << lsb(move.to))), 1), depth-1, alpha, beta, 0));
                 if(value >= beta){
                     cutoff = 1;
                     break;
@@ -193,30 +192,27 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         if(!cutoff)for(auto it = moves.moves.begin(); it!=moves.moves.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
-                //logger.printbboard(bd.white|bd.black);
-                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1).black);
-                value = max(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 1), depth-1, alpha, beta, 0));
+                value = max(value, alphabeta(Generator::sim_board(bd, make_pair(move.from,( 1ULL << lsb(move.to))), 1), depth-1, alpha, beta, 0));
                 if(value >= beta)break;
                 alpha = max(alpha, value);
                 clearb(move.to, lsb(move.to));
             }
         }
 
-        //logger.log("Finished maximizing at depth " + to_string(depth));
         return value;
     }else{
-        //logger.log("Minimizing at depth " + to_string(depth));
-
         int value = INT_MAX;
         boolean cutoff=0;
         moveset moves = Generator::get_moves_b(bd);
+
+        //Draw
+        if(moves.moves.size() + moves.captures.size() == 0) return 0;
+
         //Could use move ordering euristcs here
         for(auto it = moves.captures.begin(); it!=moves.captures.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
-                //logger.printbboard(bd.white|bd.black);
-                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).black);
-                value = min(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2), depth-1, alpha, beta, 1));
+                value = min(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, (1ULL << lsb(move.to))), 2), depth-1, alpha, beta, 1));
                 if(value <= alpha){
                     cutoff = 1;
                     break;
@@ -228,16 +224,13 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         if(!cutoff)for(auto it = moves.moves.begin(); it!=moves.moves.end() && !cutoff; it++){
             move_pair move = *it;
             while(move.to > 0){
-                //logger.printbboard(bd.white|bd.black);
-                //logger.printbboard(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).white | Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2).black);
-                value = min(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, 1ULL << lsb(move.to)), 2), depth-1, alpha, beta, 1));
+                value = min(value, alphabeta(Generator::sim_board(bd, make_pair(move.from, (1ULL << lsb(move.to))), 2), depth-1, alpha, beta, 1));
                 if(value <= alpha)break;
                 beta = min(beta, value);
                 clearb(move.to, lsb(move.to));
             }
         }
 
-        //logger.log("Finished minimizing at depth " + to_string(depth));
         return value;
     }
 }
@@ -245,4 +238,68 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
 int Engine::get_array_eval(int cboard[8][8], int color[8][8]){
     board b = Generator::array_to_board(cboard, color);
     return Evaluator::get_board_eval(b, 1) - Evaluator::get_board_eval(b, 2);
+}
+
+int Engine::move_count(board b, int c){
+    moveset moves;
+    if(c == 1) moves = Generator::get_moves_w(b);
+    else moves = Generator::get_moves_b(b);
+
+    int cnt = 0;
+
+    for(auto m : moves.moves){
+        while(m.to){
+            if(is_legal(b, make_pair(m.from, (1ULL<<lsb(m.to))), c)) cnt++;
+            clearb(m.to, lsb(m.to));
+        }
+    }
+
+    for(auto m : moves.captures){
+        while(m.to){
+            if(is_legal(b, make_pair(m.from, (1ULL<<lsb(m.to))), c)) cnt++;
+            clearb(m.to, lsb(m.to));
+        }
+    }
+
+    return cnt;
+}
+
+//0 normal, 1 white won, 2 black won, 3 draw
+int Engine::board_state(int cboard[8][8], int color[8][8], int turn){
+    board b =  Generator::array_to_board(cboard, color);
+    
+    int wmoves = move_count(b, 1);
+    int bmoves = move_count(b, 2);
+
+    if(turn == 1){
+        if(wmoves == 0 && bmoves == 0){
+            return 3;
+        }if(wmoves == 0){
+            moveset bm = Generator::get_moves_b(b);
+            if((bm.attacks&b.w_pieces[5][0]) != 0) return 2;
+            else return 3;
+        }
+    }else{
+        if(wmoves == 0 && bmoves == 0) return 3;
+        if(bmoves == 0){
+            moveset wm = Generator::get_moves_w(b);
+            if((wm.attacks&b.b_pieces[5][0]) != 0) return 1;
+            else return 3;
+        }
+    }
+
+
+    return 0;
+}
+
+bool in_check(int c, int cboard[8][8], int color[8][8]){
+    board b  = Generator::array_to_board(cboard, color);
+    
+    moveset m;
+    if(c == 1) m = Generator::get_moves_b(b);
+    else m = Generator::get_moves_w(b);
+
+    if(c == 1) return (b.w_pieces[5][0]&m.attacks) != 0;
+    else return (b.b_pieces[5][0]&m.attacks) != 0;
+
 }
