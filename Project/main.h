@@ -30,8 +30,14 @@ using namespace std;
 
 Engine engine;
 vector<vector<int>> set_of_moves;
+
 int boardtc[8][8];
 int colortc[8][8];
+
+bool white_left_castle;
+bool white_right_castle;
+bool black_left_castle;
+bool black_right_castle;
 
 pair<int, int> engine_move;
 
@@ -51,6 +57,11 @@ class GameRenderer{
         const int SCREEN_WIDTH = CELL_SIZE * 8 + LRBORDER_SIZE * 2;
 
         const int PIZE_OFFSET = CELL_SIZE/8 + ((CELL_SIZE/8)&1);
+
+        bool castlingwr = 1;
+        bool castlingwl = 1;
+        bool castlingbr = 1;
+        bool castlingbl = 1;
 
         TTF_Font* font;
         SDL_Color text_color = {220,220,220};

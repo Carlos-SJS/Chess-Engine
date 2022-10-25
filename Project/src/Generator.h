@@ -8,6 +8,8 @@ namespace Generator{
     void load_data();
     moveset get_moves_w(board);
     moveset get_moves_b(board);
+    moveset get_moves_w(board, bool);
+    moveset get_moves_b(board, bool);
     moveset get_moves(vector<boardset>, bitboard, bitboard);
 
     bitboard get_knight_moves(bitboard, bitboard);
@@ -21,7 +23,7 @@ namespace Generator{
     bitboard get_queen_moves(bitboard, bitboard);
     bitboard get_queen_captures(bitboard, bitboard, bitboard);
 
-    board array_to_board(int cboard[8][8], int color[8][8]);
+    board array_to_board(int cboard[8][8], int color[8][8], bool, bool, bool, bool);
 
     board sim_board(board, move_pair, int);
 

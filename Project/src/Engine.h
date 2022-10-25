@@ -26,8 +26,8 @@ class Engine{
         void init();
 
         //Engine functions
-        vector<vector<int>> getMoves(int cboard[8][8], int color[8][8]);
-        pair<int, int> get_engine_move(int cboard[8][8], int color[8][8]);
+        vector<vector<int>> getMoves(int cboard[8][8], int color[8][8], bool, bool, bool, bool);
+        pair<int, int> get_engine_move(int cboard[8][8], int color[8][8], bool, bool, bool, bool);
         int get_array_eval(int cboard[8][8], int color[8][8]);
 
         int board_state(int cboard[8][8], int color[8][8], int turn);

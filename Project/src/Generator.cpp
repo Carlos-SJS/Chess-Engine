@@ -166,6 +166,10 @@ namespace Generator{
 
     //Get moves for white
     moveset get_moves_w(board b){
+        return get_moves_w(b, 1);
+    }
+
+    moveset get_moves_w(board b, bool castle){
         // 0 -> pawn, 1 -> knight, 2 -> bishop, 3 -> rook, 4 -> queen, 5 -> king   
         moveset moves = get_moves(b.w_pieces, b.white, b.black);
         moves.color = 1;
@@ -184,11 +188,29 @@ namespace Generator{
                 }
             }
         }
+
+        //Castling
+        if(castle && b.w_pieces[5].size()){
+            board ob = b;
+            ob.white |= leftcst(b.w_pieces[5][0])|rightcst(b.w_pieces[5][0]);
+            if(b.left_white_castle && (b.white&(b.w_pieces[5][0]<<4)) && (leftcst(b.w_pieces[5][0])&(b.black|b.white)) == 0 && ((leftcst(b.w_pieces[5][0])|b.w_pieces[5][0])&get_moves_b(ob, 0).attacks) == 0){
+                moves.moves.push_back({{5,0}, b.w_pieces[5][0]>>2});
+            }
+
+            if(b.right_white_castle && (b.white&(b.w_pieces[5][0]>>3)) && (rightcst(b.w_pieces[5][0])&(b.black|b.white)) == 0 && ((rightcst(b.w_pieces[5][0])|b.w_pieces[5][0])&get_moves_b(ob, 0).attacks) == 0){
+                moves.moves.push_back({{5,0}, b.w_pieces[5][0]<<2});
+            }
+        }
+
         return moves;
     }
 
     //Get moves for black
     moveset get_moves_b(board b){
+        return get_moves_b(b, 1);
+    }
+
+    moveset get_moves_b(board b, bool castle){
         // 0 -> pawn, 1 -> knight, 2 -> bishop, 3 -> rook, 4 -> queen, 5 -> king   
         moveset moves = get_moves(b.b_pieces, b.black, b.white);
         moves.color = 2;
@@ -206,6 +228,18 @@ namespace Generator{
 
                     moves.attacks |= black_pawn_capture_t[bb_sq(pawn)] & b.white;
                 }
+            }
+        }
+
+        if(castle && b.b_pieces[5].size()){
+            board ob = b;
+            ob.black |= leftcst(b.b_pieces[5][0])|rightcst(b.b_pieces[5][0]);
+            if(b.left_black_castle && (b.white&(b.w_pieces[5][0]<<4)) && (leftcst(b.b_pieces[5][0])&(b.black|b.white)) == 0 && ((leftcst(b.b_pieces[5][0])|b.b_pieces[5][0])&get_moves_w(ob, 0).attacks) == 0){
+                moves.moves.push_back({{5,0}, b.b_pieces[5][0]>>2});
+            }
+
+            if(b.right_black_castle && (b.white&(b.w_pieces[5][0]>>3)) && (rightcst(b.b_pieces[5][0])&(b.black|b.white)) == 0 && ((rightcst(b.b_pieces[5][0])|b.b_pieces[5][0])&get_moves_w(ob, 0).attacks) == 0){
+                moves.moves.push_back({{5,0}, b.b_pieces[5][0]<<2});
             }
         }
 
@@ -277,6 +311,7 @@ namespace Generator{
                 auto p = pieces[5][i];
                 m = get_king_moves(p, (own|other));
                 c = get_king_captures(p, other);
+
                 if(m) moves.moves.push_back({{5,i}, m});
                 if(c) moves.captures.push_back({{5,i}, c});
 
@@ -372,10 +407,16 @@ namespace Generator{
         return get_bishop_captures(queen, other, self) | get_rook_captures(queen, other, self);
     }
 
-    board array_to_board(int cboard[8][8], int color[8][8]){
+    board array_to_board(int cboard[8][8], int color[8][8], bool white_lc, bool white_rc, bool black_lc, bool black_rc){
         board bd;
         bd.white = 0ULL;
         bd.black = 0ULL;
+
+        bd.left_white_castle = white_lc;
+        bd.right_white_castle = white_rc;
+        bd.left_black_castle = black_lc;
+        bd.right_black_castle = black_rc;
+
         for(int i=0; i<8; i++)
             for(int j=0; j<8; j++)
                 if(color[i][j] == 1){
@@ -406,7 +447,29 @@ namespace Generator{
                 b.w_pieces[4].push_back(m.to);
                 swap(b.w_pieces[0][m.from.second], b.w_pieces[0][b.w_pieces[0].size()-1]);
                 b.w_pieces[0].pop_back();
+            }else if(m.from.first == 5 && b.w_pieces[5][m.from.second]>>2 == m.to){
+                for(int i=0; i<b.w_pieces[3].size(); i++) if(b.w_pieces[3][i]&(m.to>>2)){b.w_pieces[3][i]>>=3;break;}
+                b.white &= ~m.to>>2;
+                b.white &=  m.to<<1;
+
+                b.left_white_castle = 0;
+                b.right_white_castle = 0;
+            }else if(m.from.first == 5 && b.w_pieces[5][m.from.second]<<2 == m.to){
+                for(int i=0; i<b.w_pieces[3].size(); i++) if(b.w_pieces[3][i]&(m.to<<1)){b.w_pieces[3][i]<<=2; break;}
+                b.white &= ~m.to<<1;
+                b.white &=  m.to>>1;
+
+                b.left_white_castle = 0;
+                b.right_white_castle = 0;
             }else b.w_pieces[m.from.first][m.from.second] = m.to;
+
+            if(b.w_pieces[5].size() == 0) b.left_white_castle = 0, b.right_white_castle = 0;
+            else if(m.from.first == 5) b.left_white_castle = 0, b.right_white_castle = 0;
+            else if(m.from.first == 3){
+                if(b.left_white_castle && b.w_pieces[m.from.first][m.from.second] < b.w_pieces[5][0]) b.left_white_castle = 0;
+                else if(b.right_white_castle && b.w_pieces[m.from.first][m.from.second] > b.w_pieces[5][0]) b.right_white_castle = 0;
+            }
+
         }else{ //Black
             b.black &= ~b.b_pieces[m.from.first][m.from.second];
             b.white &= ~m.to;
@@ -417,7 +480,28 @@ namespace Generator{
                 b.b_pieces[4].push_back(m.to);
                 swap(b.b_pieces[0][m.from.second], b.b_pieces[0][b.b_pieces[0].size()-1]);
                 b.b_pieces[0].pop_back();
+            }else if(m.from.first == 5 && b.b_pieces[5][m.from.second]>>2 == m.to){
+                for(int i=0; i<b.b_pieces[3].size(); i++) if(b.b_pieces[3][i]&(m.to>>2)){b.b_pieces[3][i]>>=3;break;}
+                b.black &= ~m.to>>2;
+                b.black &=  m.to<<1;
+
+                b.left_black_castle = 0;
+                b.right_black_castle = 0;
+            }else if(m.from.first == 5 && b.b_pieces[5][m.from.second]<<2 == m.to){
+                for(int i=0; i<b.b_pieces[3].size(); i++) if(b.b_pieces[3][i]&(m.to<<1)){b.b_pieces[3][i]<<=2; break;}
+                b.black &= ~m.to<<1;
+                b.black &=  m.to>>1;
+
+                b.left_black_castle = 0;
+                b.right_black_castle = 0;
             }else b.b_pieces[m.from.first][m.from.second] = m.to;
+
+            if(b.b_pieces[5].size() == 0) b.left_black_castle = 0, b.right_black_castle = 0;
+            else if(m.from.first == 5) b.left_black_castle = 0, b.right_black_castle = 0;
+            else if(m.from.first == 3){
+                if(b.left_black_castle && b.b_pieces[m.from.first][m.from.second] < b.b_pieces[5][0]) b.left_black_castle = 0;
+                else if(b.right_black_castle && b.b_pieces[m.from.first][m.from.second] > b.b_pieces[5][0]) b.right_black_castle = 0;
+            }
         }
 
         //Eliminating ghost white pieces (Can be optimized)

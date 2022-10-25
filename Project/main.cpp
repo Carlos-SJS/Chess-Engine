@@ -139,17 +139,51 @@ void GameRenderer::renderer_loop(){
                             pair<int, int> m_from = sq_cd(move_to_draw);
                             pair<int, int> m_to = sq_cd(moveid);
 
-                            if(engine.in_check(2, board, color)) audio_check.play();
-                            else if(board[7 - m_to.cY][m_to.cX]) audio_capture.play();
-                            else audio_move.play();
+                            int ant = board[7 - m_to.cY][m_to.cX];
 
                             board[7 - m_to.cY][m_to.cX] = board[7 - m_from.cY][m_from.cX];
                             color[7 - m_to.cY][m_to.cX] = color[7 - m_from.cY][m_from.cX];
                             board[7 - m_from.cY][m_from.cX] = 0;
                             color[7 - m_from.cY][m_from.cX] = 0;
 
+                            if(engine.in_check(2, board, color)) audio_check.play();
+                            else if(ant != 0) audio_capture.play();
+                            else audio_move.play();
+
                             //Pawn auto promotes to queen
                             if(m_to.cY == 7 && board[7 - m_to.cY][m_to.cX] == 1) board[7 - m_to.cY][m_to.cX] = 5;
+
+                            if(board[7 - m_to.cY][m_to.cX] == 6){
+                                if(m_from.cX == 0) castlingwl = 0;
+                                else if(m_from.cX == 7) castlingwr = 0;
+                            }
+
+
+                            //White castling (Right side)
+                            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwr && m_to.cX - m_from.cX == 2){
+                                logger.warning("Castling right side (white) " + to_string(m_to.cX));
+
+                                castlingwl = 0;
+                                castlingwr = 0;
+
+                                board[7 - m_to.cY][m_to.cX - 1] = board[7 - m_to.cY][m_to.cX + 1];
+                                color[7 - m_to.cY][m_to.cX - 1] = color[7 - m_to.cY][m_to.cX + 1];
+                                board[7 - m_to.cY][m_to.cX + 1] = 0;
+                                color[7 - m_to.cY][m_to.cX + 1] = 0;
+                            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingwl = 0, castlingwr = 0;
+                            
+                            //White castling (Left side)
+                            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwl && m_from.cX - m_to.cX == 2){
+                                logger.warning("Castling right side (white) " + to_string(m_to.cX));
+
+                                castlingwl = 0;
+                                castlingwr = 0;
+
+                                board[7 - m_to.cY][m_to.cX + 1] = board[7 - m_to.cY][m_to.cX - 2];
+                                color[7 - m_to.cY][m_to.cX + 1] = color[7 - m_to.cY][m_to.cX - 2];
+                                board[7 - m_to.cY][m_to.cX - 2] = 0;
+                                color[7 - m_to.cY][m_to.cX - 2] = 0;
+                            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingwl = 0, castlingwr = 0;
 
                             moves_set.clear();
 
@@ -179,16 +213,51 @@ void GameRenderer::renderer_loop(){
             f = sq_cd(engine_move.first);
             t = sq_cd(engine_move.second);
 
-            if(engine.in_check(1, board, color)) audio_check.play();
-            else if(board[7 - t.first][t.second]) audio_capture.play();
-            else audio_move.play();
+            int ant = board[7 - t.first][t.second];
 
             board[7 - t.first][t.second] = board[7 - f.first][f.second];
             color[7 - t.first][t.second] = color[7 - f.first][f.second];
             board[7 - f.first][f.second] = 0;
             color[7 - f.first][f.second] = 0;
 
+            if(engine.in_check(1, board, color)) audio_check.play();
+            else if(ant!=0) audio_capture.play();
+            else audio_move.play();
+
             if(t.first == 0 && board[7 - t.first][t.second] == 1) board[7 - t.first][t.second] = 5;
+
+            pair<int, int> m_to = t, m_from = f;
+
+            if(board[7 - m_to.cY][m_to.cX] == 6){
+                if(m_from.cX == 0) castlingbl = 0;
+                else if(m_from.cX == 7) castlingbr = 0;
+            }
+
+            //black castling (Right side)
+            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwr && m_to.cX - m_from.cX == 2){
+                logger.warning("Castling right side (white) " + to_string(m_to.cX));
+
+                castlingbl = 0;
+                castlingbr = 0;
+
+                board[7 - m_to.cY][m_to.cX - 1] = board[7 - m_to.cY][m_to.cX + 1];
+                color[7 - m_to.cY][m_to.cX - 1] = color[7 - m_to.cY][m_to.cX + 1];
+                board[7 - m_to.cY][m_to.cX + 1] = 0;
+                color[7 - m_to.cY][m_to.cX + 1] = 0;
+            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingbl = 0, castlingbr = 0;
+            
+            //Black castling (Left side)
+            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwl && m_from.cX - m_to.cX == 2){
+                logger.warning("Castling right side (white) " + to_string(m_to.cX));
+
+                castlingbl = 0;
+                castlingbr = 0;
+
+                board[7 - m_to.cY][m_to.cX + 1] = board[7 - m_to.cY][m_to.cX - 2];
+                color[7 - m_to.cY][m_to.cX + 1] = color[7 - m_to.cY][m_to.cX - 2];
+                board[7 - m_to.cY][m_to.cX - 2] = 0;
+                color[7 - m_to.cY][m_to.cX - 2] = 0;
+            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingbl = 0, castlingbr = 0;
 
             turn = 0;
             waiting_engine_move = 0;
@@ -220,8 +289,15 @@ void GameRenderer::request_move_update(){
     move_to_draw = -1;
     rend_moves = 0;
     need_move_update = 1;
+
     for(int i=0; i<8; i++) for(int j=0; j<8; j++) boardtc[i][j] = board[i][j];
     for(int i=0; i<8; i++) for(int j=0; j<8; j++) colortc[i][j] = color[i][j];
+
+    white_left_castle = castlingwl;
+    white_right_castle = castlingwr;
+    black_left_castle = castlingbl;
+    black_right_castle = castlingbr; 
+
     calculate_moves_flag = 1;
 }
 
@@ -231,6 +307,11 @@ void GameRenderer::request_engine_move(){
     
     for(int i=0; i<8; i++) for(int j=0; j<8; j++) boardtc[i][j] = board[i][j];
     for(int i=0; i<8; i++) for(int j=0; j<8; j++) colortc[i][j] = color[i][j];
+
+    white_left_castle = castlingwl;
+    white_right_castle = castlingwr;
+    black_left_castle = castlingbl;
+    black_right_castle = castlingbr;
 
     engine_move_flag = 1;
     waiting_engine_move = 1;
@@ -338,7 +419,7 @@ int main(int argc, char *argv[]){
                 handle_gstate(state);
             }else{
                 logger.log("Calculating moves for renderer");
-                set_of_moves = engine.getMoves(boardtc, colortc);
+                set_of_moves = engine.getMoves(boardtc, colortc, white_left_castle, white_right_castle, black_left_castle, black_right_castle);
                 calculate_moves_flag = 0;
             
                 logger.log("Board eval (white): " + to_string(engine.get_array_eval(boardtc, colortc)));
@@ -351,7 +432,7 @@ int main(int argc, char *argv[]){
             if(state != 0){
                 handle_gstate(state);
             }else{
-                engine_move = engine.get_engine_move(boardtc, colortc);
+                engine_move = engine.get_engine_move(boardtc, colortc, white_left_castle, white_right_castle, black_left_castle, black_right_castle);
                 engine_move_flag = 0;
             }
         }

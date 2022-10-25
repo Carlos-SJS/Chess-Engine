@@ -24,6 +24,7 @@ void Engine::init(){
     logger.success("Engine succesfully initialized");
 }
 
+//There is a bug with castling here
 bool Engine::is_legal(board b, move_pair m, int c){
     if(c == 1){
         b = Generator::sim_board(b, m, c);
@@ -38,15 +39,17 @@ bool Engine::is_legal(board b, move_pair m, int c){
     }
 }
 
-vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8]){
+vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8],  bool white_lc, bool white_rc, bool black_lc, bool black_rc){
     logger.log("Calculating moves for white player");
 
-    board b = Generator::array_to_board(cboard, color);
+    board b = Generator::array_to_board(cboard, color, white_lc, white_rc, black_lc, black_rc);
+
+    logger.log("Getting moves");
     moveset moves = Generator::get_moves_w(b);
 
     vector<vector<int>> move_list(64);
     
-
+    logger.log("Converting moves");
     for(int i=0; i<moves.moves.size(); i++){
         int piece = bb_sq(b.w_pieces[moves.moves[i].from.first][moves.moves[i].from.second]);
         bitboard move = moves.moves[i].to;
@@ -93,10 +96,10 @@ vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8]){
     return move_list;
 }
 
-pair<int, int> Engine::get_engine_move(int cboard[8][8], int color[8][8]){
+pair<int, int> Engine::get_engine_move(int cboard[8][8], int color[8][8], bool white_lc, bool white_rc, bool black_lc, bool black_rc){
     logger.log("Calculating engine move");
     
-    board b = Generator::array_to_board(cboard, color);
+    board b = Generator::array_to_board(cboard, color, white_lc, white_rc, black_lc, black_rc);
     moveset moves = Generator::get_moves_b(b);
     
     bool c = 0;
@@ -236,7 +239,7 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
 }
 
 int Engine::get_array_eval(int cboard[8][8], int color[8][8]){
-    board b = Generator::array_to_board(cboard, color);
+    board b = Generator::array_to_board(cboard, color, 0, 0, 0, 0);
     return Evaluator::get_board_eval(b, 1) - Evaluator::get_board_eval(b, 2);
 }
 
@@ -266,7 +269,7 @@ int Engine::move_count(board b, int c){
 
 //0 normal, 1 white won, 2 black won, 3 draw
 int Engine::board_state(int cboard[8][8], int color[8][8], int turn){
-    board b =  Generator::array_to_board(cboard, color);
+    board b =  Generator::array_to_board(cboard, color, 0, 0, 0, 0);
     
     int wmoves = move_count(b, 1);
     int bmoves = move_count(b, 2);
@@ -292,12 +295,12 @@ int Engine::board_state(int cboard[8][8], int color[8][8], int turn){
     return 0;
 }
 
-bool in_check(int c, int cboard[8][8], int color[8][8]){
-    board b  = Generator::array_to_board(cboard, color);
+bool Engine::in_check(int c, int cboard[8][8], int color[8][8]){
+    board b  = Generator::array_to_board(cboard, color, 0, 0, 0, 0);
     
     moveset m;
-    if(c == 1) m = Generator::get_moves_b(b);
-    else m = Generator::get_moves_w(b);
+    if(c == 1) m = Generator::get_moves_b(b, 0);
+    else m = Generator::get_moves_w(b, 0);
 
     if(c == 1) return (b.w_pieces[5][0]&m.attacks) != 0;
     else return (b.b_pieces[5][0]&m.attacks) != 0;
