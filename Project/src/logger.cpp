@@ -61,3 +61,34 @@ void Logger::printbboard(bitboard b){
     }
     for(int i=7; i>=0; i--) cout << "\t\t\t" << board[i] << "\n";
 }
+
+void Logger::printboard(board b){
+    vector<char> w(64, '.');
+    vector<char> n(64,'.');
+
+    for(int i = 0; i<b.w_pieces[0].size(); i++) w[bb_sq(b.w_pieces[0][i])] = 'P';
+    for(int i = 0; i<b.w_pieces[1].size(); i++) w[bb_sq(b.w_pieces[1][i])] = 'N';
+    for(int i = 0; i<b.w_pieces[2].size(); i++) w[bb_sq(b.w_pieces[2][i])] = 'B';
+    for(int i = 0; i<b.w_pieces[3].size(); i++) w[bb_sq(b.w_pieces[3][i])] = 'R';
+    for(int i = 0; i<b.w_pieces[4].size(); i++) w[bb_sq(b.w_pieces[4][i])] = 'Q';
+    for(int i = 0; i<b.w_pieces[5].size(); i++) w[bb_sq(b.w_pieces[5][i])] = 'K';
+
+    for(int i = 0; i<b.b_pieces[0].size(); i++) n[bb_sq(b.b_pieces[0][i])] = 'P';
+    for(int i = 0; i<b.b_pieces[1].size(); i++) n[bb_sq(b.b_pieces[1][i])] = 'N';
+    for(int i = 0; i<b.b_pieces[2].size(); i++) n[bb_sq(b.b_pieces[2][i])] = 'B';
+    for(int i = 0; i<b.b_pieces[3].size(); i++) n[bb_sq(b.b_pieces[3][i])] = 'R';
+    for(int i = 0; i<b.b_pieces[4].size(); i++) n[bb_sq(b.b_pieces[4][i])] = 'Q';
+    for(int i = 0; i<b.b_pieces[5].size(); i++) n[bb_sq(b.b_pieces[5][i])] = 'K';
+
+    cout << "\x1b[90m" << get_time() << " \x1b[0m:\x1b[100m LOG (Board) \x1b[0m:\n";
+    for(int i=7; i>=0; i--){
+        cout << "\t\t\t";
+        for(int j=0; j<8; j++){
+            if(w[i*8 + j] != '.' && n[i*8 + j] != '.') cout << "\x1b[31me\e[0m";
+            else if(w[i*8 + j] != '.') cout << "\x1b[97m" << w[i*8 + j] << "\e[0m";
+            else if(n[i*8 + j] != '.') cout << "\x1b[90m" << n[i*8 + j] << "\e[0m";
+            else cout << "\x1b[90m.\x1b[0m";
+        }
+        cout << '\n';
+    }
+}

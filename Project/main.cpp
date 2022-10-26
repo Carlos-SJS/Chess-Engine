@@ -153,11 +153,10 @@ void GameRenderer::renderer_loop(){
                             //Pawn auto promotes to queen
                             if(m_to.cY == 7 && board[7 - m_to.cY][m_to.cX] == 1) board[7 - m_to.cY][m_to.cX] = 5;
 
-                            if(board[7 - m_to.cY][m_to.cX] == 6){
+                            if(board[7 - m_to.cY][m_to.cX] == 4){
                                 if(m_from.cX == 0) castlingwl = 0;
                                 else if(m_from.cX == 7) castlingwr = 0;
                             }
-
 
                             //White castling (Right side)
                             if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwr && m_to.cX - m_from.cX == 2){
@@ -170,7 +169,7 @@ void GameRenderer::renderer_loop(){
                                 color[7 - m_to.cY][m_to.cX - 1] = color[7 - m_to.cY][m_to.cX + 1];
                                 board[7 - m_to.cY][m_to.cX + 1] = 0;
                                 color[7 - m_to.cY][m_to.cX + 1] = 0;
-                            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingwl = 0, castlingwr = 0;
+                            }
                             
                             //White castling (Left side)
                             if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwl && m_from.cX - m_to.cX == 2){
@@ -228,13 +227,13 @@ void GameRenderer::renderer_loop(){
 
             pair<int, int> m_to = t, m_from = f;
 
-            if(board[7 - m_to.cY][m_to.cX] == 6){
+            if(board[7 - m_to.cY][m_to.cX] == 4){
                 if(m_from.cX == 0) castlingbl = 0;
                 else if(m_from.cX == 7) castlingbr = 0;
             }
 
             //black castling (Right side)
-            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwr && m_to.cX - m_from.cX == 2){
+            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingbr && m_to.cX - m_from.cX == 2){
                 logger.warning("Castling right side (white) " + to_string(m_to.cX));
 
                 castlingbl = 0;
@@ -244,10 +243,10 @@ void GameRenderer::renderer_loop(){
                 color[7 - m_to.cY][m_to.cX - 1] = color[7 - m_to.cY][m_to.cX + 1];
                 board[7 - m_to.cY][m_to.cX + 1] = 0;
                 color[7 - m_to.cY][m_to.cX + 1] = 0;
-            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingbl = 0, castlingbr = 0;
+            }
             
             //Black castling (Left side)
-            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwl && m_from.cX - m_to.cX == 2){
+            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingbl && m_from.cX - m_to.cX == 2){
                 logger.warning("Castling right side (white) " + to_string(m_to.cX));
 
                 castlingbl = 0;
@@ -297,6 +296,8 @@ void GameRenderer::request_move_update(){
     white_right_castle = castlingwr;
     black_left_castle = castlingbl;
     black_right_castle = castlingbr; 
+
+    logger.log("Casling wl(" + to_string(castlingwl) + "), Castling wr(" + to_string(castlingwr) + ")");
 
     calculate_moves_flag = 1;
 }

@@ -18,6 +18,7 @@ class Logger{
         static string get_time();
         static void init();
         static void printbboard(bitboard);
+        static void printboard(board);
 };
 
 extern Logger logger;

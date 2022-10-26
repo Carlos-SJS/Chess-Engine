@@ -16,7 +16,8 @@ using namespace std;
 #define bb_isq(a) (63-bb_sq(a))
 #define sq_cd(a) (make_pair((a>>3), a%8))
 
-#define leftcst(k) ((k>>1)|(k>>2)|(k>>3))
+#define leftcstall(k) ((k>>1)|(k>>2)|(k>>3))
+#define leftcst(k) ((k>>1)|(k>>2))
 #define rightcst(k) ((k<<1)|(k<<2))
 
 #define getbboard(y, x) (1ULL << ((y<<3)+x))

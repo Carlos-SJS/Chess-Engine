@@ -190,14 +190,14 @@ namespace Generator{
         }
 
         //Castling
-        if(castle && b.w_pieces[5].size()){
+        if(castle && b.w_pieces[5].size() > 0){
             board ob = b;
             ob.white |= leftcst(b.w_pieces[5][0])|rightcst(b.w_pieces[5][0]);
-            if(b.left_white_castle && (b.white&(b.w_pieces[5][0]<<4)) && (leftcst(b.w_pieces[5][0])&(b.black|b.white)) == 0 && ((leftcst(b.w_pieces[5][0])|b.w_pieces[5][0])&get_moves_b(ob, 0).attacks) == 0){
+            if(b.left_white_castle && (b.white&(b.w_pieces[5][0]<<4)) && (leftcstall(b.w_pieces[5][0])&(b.black|b.white)) == 0 && ((leftcst(b.w_pieces[5][0])|b.w_pieces[5][0])&get_moves_b(ob, 0).attacks) == 0){
                 moves.moves.push_back({{5,0}, b.w_pieces[5][0]>>2});
             }
 
-            if(b.right_white_castle && (b.white&(b.w_pieces[5][0]>>3)) && (rightcst(b.w_pieces[5][0])&(b.black|b.white)) == 0 && ((rightcst(b.w_pieces[5][0])|b.w_pieces[5][0])&get_moves_b(ob, 0).attacks) == 0){
+            if(b.right_white_castle && (b.white&(b.w_pieces[5][0]<<3)) && (rightcst(b.w_pieces[5][0])&(b.black|b.white)) == 0 && ((rightcst(b.w_pieces[5][0])|b.w_pieces[5][0])&get_moves_b(ob, 0).attacks) == 0){
                 moves.moves.push_back({{5,0}, b.w_pieces[5][0]<<2});
             }
         }
@@ -442,25 +442,43 @@ namespace Generator{
             b.black &= ~m.to;
             b.white |= m.to;
 
-            if(m.from.first == 0 && m.from.second >= (1ULL<<55) && 0){ //Queen promotion
+            if(m.from.first == 0 && b.w_pieces[m.from.first][m.from.second] > (1ULL<<48)){ //Queen promotion
                 logger.warning("Queening stuff");
                 b.w_pieces[4].push_back(m.to);
                 swap(b.w_pieces[0][m.from.second], b.w_pieces[0][b.w_pieces[0].size()-1]);
                 b.w_pieces[0].pop_back();
-            }else if(m.from.first == 5 && b.w_pieces[5][m.from.second]>>2 == m.to){
-                for(int i=0; i<b.w_pieces[3].size(); i++) if(b.w_pieces[3][i]&(m.to>>2)){b.w_pieces[3][i]>>=3;break;}
-                b.white &= ~m.to>>2;
-                b.white &=  m.to<<1;
+            }else if(m.from.first == 5 && (b.w_pieces[5][m.from.second]>>2) == m.to){
+                //logger.error("FUCK THIS FUCKING SHIT (left castling)");
+                //logger.printbboard(b.white|b.black);
+
+                b.w_pieces[m.from.first][m.from.second] = m.to;
+                
+                for(int i=0; i<b.w_pieces[3].size(); i++) if(b.w_pieces[3][i]==(m.to>>2)){b.w_pieces[3][i]<<=3;break;}
+                b.white &= ~(m.to>>2);
+                b.white |=  m.to<<1;
 
                 b.left_white_castle = 0;
                 b.right_white_castle = 0;
-            }else if(m.from.first == 5 && b.w_pieces[5][m.from.second]<<2 == m.to){
-                for(int i=0; i<b.w_pieces[3].size(); i++) if(b.w_pieces[3][i]&(m.to<<1)){b.w_pieces[3][i]<<=2; break;}
-                b.white &= ~m.to<<1;
-                b.white &=  m.to>>1;
+
+                //logger.printbboard(b.white|b.black);
+            }else if(m.from.first == 5 && (b.w_pieces[5][m.from.second]<<2) == m.to){
+                //logger.error("FUCK THIS FUCKING SHIT (right castling)");
+                //logger.printbboard(b.white|b.black);
+
+                b.w_pieces[m.from.first][m.from.second] = m.to;
+                
+                for(int i=0; i<b.w_pieces[3].size(); i++)
+                    if(b.w_pieces[3][i]==(m.to<<1)){
+                        b.white &= ~b.w_pieces[3][i];
+                        b.w_pieces[3][i]>>=2;
+                        b.white|=b.w_pieces[3][i]; 
+                        break;
+                    }
 
                 b.left_white_castle = 0;
                 b.right_white_castle = 0;
+
+                //logger.printbboard(b.white|b.black);
             }else b.w_pieces[m.from.first][m.from.second] = m.to;
 
             if(b.w_pieces[5].size() == 0) b.left_white_castle = 0, b.right_white_castle = 0;
@@ -475,19 +493,23 @@ namespace Generator{
             b.white &= ~m.to;
             b.black |= m.to;
 
-            if(m.from.first == 0 && m.from.second < (1ULL<<8) && 0){ //Queen promotion
+            if(m.from.first == 0 && b.b_pieces[m.from.first][m.from.second] < (1ULL<<16)){ //Queen promotion
                 logger.warning("Queening stuff");
                 b.b_pieces[4].push_back(m.to);
                 swap(b.b_pieces[0][m.from.second], b.b_pieces[0][b.b_pieces[0].size()-1]);
                 b.b_pieces[0].pop_back();
             }else if(m.from.first == 5 && b.b_pieces[5][m.from.second]>>2 == m.to){
+                b.b_pieces[m.from.first][m.from.second] = m.to;
+                
                 for(int i=0; i<b.b_pieces[3].size(); i++) if(b.b_pieces[3][i]&(m.to>>2)){b.b_pieces[3][i]>>=3;break;}
                 b.black &= ~m.to>>2;
-                b.black &=  m.to<<1;
+                b.black |=  m.to<<1;
 
                 b.left_black_castle = 0;
                 b.right_black_castle = 0;
             }else if(m.from.first == 5 && b.b_pieces[5][m.from.second]<<2 == m.to){
+                b.b_pieces[m.from.first][m.from.second] = m.to;
+
                 for(int i=0; i<b.b_pieces[3].size(); i++) if(b.b_pieces[3][i]&(m.to<<1)){b.b_pieces[3][i]<<=2; break;}
                 b.black &= ~m.to<<1;
                 b.black &=  m.to>>1;
