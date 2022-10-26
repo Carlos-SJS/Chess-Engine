@@ -136,6 +136,8 @@ void GameRenderer::renderer_loop(){
                         if(moves_set.find(moveid) != moves_set.end()){
                             logger.log("Player move selected");
 
+                            current_move++;
+
                             pair<int, int> m_from = sq_cd(move_to_draw);
                             pair<int, int> m_to = sq_cd(moveid);
 
@@ -149,6 +151,8 @@ void GameRenderer::renderer_loop(){
                             if(engine.in_check(2, board, color)) audio_check.play();
                             else if(ant != 0) audio_capture.play();
                             else audio_move.play();
+
+                            update_notation(m_from, m_to, 1, ant!=0);
 
                             //Pawn auto promotes to queen
                             if(m_to.cY == 7 && board[7 - m_to.cY][m_to.cX] == 1) board[7 - m_to.cY][m_to.cX] = 5;
@@ -169,10 +173,11 @@ void GameRenderer::renderer_loop(){
                                 color[7 - m_to.cY][m_to.cX - 1] = color[7 - m_to.cY][m_to.cX + 1];
                                 board[7 - m_to.cY][m_to.cX + 1] = 0;
                                 color[7 - m_to.cY][m_to.cX + 1] = 0;
+
+                                game_notation += "O-O";
                             }
-                            
                             //White castling (Left side)
-                            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwl && m_from.cX - m_to.cX == 2){
+                            else if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwl && m_from.cX - m_to.cX == 2){
                                 logger.warning("Castling right side (white) " + to_string(m_to.cX));
 
                                 castlingwl = 0;
@@ -182,9 +187,13 @@ void GameRenderer::renderer_loop(){
                                 color[7 - m_to.cY][m_to.cX + 1] = color[7 - m_to.cY][m_to.cX - 2];
                                 board[7 - m_to.cY][m_to.cX - 2] = 0;
                                 color[7 - m_to.cY][m_to.cX - 2] = 0;
-                            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingwl = 0, castlingwr = 0;
+
+                                game_notation += "O-O-O";
+                            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingwl = 0, castlingwr = 0, game_notation += "K" + (ant!=0?string("x"):string("")) + string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
 
                             moves_set.clear();
+
+                            logger.log(game_notation);
 
                             request_engine_move();
                             //request_move_update();
@@ -219,6 +228,8 @@ void GameRenderer::renderer_loop(){
             board[7 - f.first][f.second] = 0;
             color[7 - f.first][f.second] = 0;
 
+            update_notation(f, t, 2, ant!=0);
+
             if(engine.in_check(1, board, color)) audio_check.play();
             else if(ant!=0) audio_capture.play();
             else audio_move.play();
@@ -243,10 +254,11 @@ void GameRenderer::renderer_loop(){
                 color[7 - m_to.cY][m_to.cX - 1] = color[7 - m_to.cY][m_to.cX + 1];
                 board[7 - m_to.cY][m_to.cX + 1] = 0;
                 color[7 - m_to.cY][m_to.cX + 1] = 0;
+
+                game_notation += "O-O";
             }
-            
             //Black castling (Left side)
-            if(board[7 - m_to.cY][m_to.cX] == 6 && castlingbl && m_from.cX - m_to.cX == 2){
+            else if(board[7 - m_to.cY][m_to.cX] == 6 && castlingbl && m_from.cX - m_to.cX == 2){
                 logger.warning("Castling right side (white) " + to_string(m_to.cX));
 
                 castlingbl = 0;
@@ -256,7 +268,19 @@ void GameRenderer::renderer_loop(){
                 color[7 - m_to.cY][m_to.cX + 1] = color[7 - m_to.cY][m_to.cX - 2];
                 board[7 - m_to.cY][m_to.cX - 2] = 0;
                 color[7 - m_to.cY][m_to.cX - 2] = 0;
-            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingbl = 0, castlingbr = 0;
+
+                game_notation += "O-O-O";
+            }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingbl = 0, castlingbr = 0, game_notation += "K" + (ant!=0?string("x"):string("")) + string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
+
+            if(engine.in_check(1, board, color)){
+                audio_check.play();
+                game_notation += "+";
+            }
+            else if(ant!=0) audio_capture.play();
+            else audio_move.play();
+
+
+            logger.log(game_notation);
 
             turn = 0;
             waiting_engine_move = 0;
@@ -327,6 +351,75 @@ void GameRenderer::set_values(SDL_Renderer *rend){
     audio_capture.set_file("Resources/Sound/game/capture.wav");
     audio_check.set_file("Resources/Sound/game/check.wav");
 
+}
+
+void GameRenderer::update_notation(pair<int, int> m_from, pair<int, int> m_to, int c, bool cap){
+    //Notation managment
+    
+    if(c == 1) game_notation += (current_move>0?string(" "):string("")) + to_string(current_move) + ". ";
+    else game_notation += " ";
+
+    if(board[7 - m_to.cY][m_to.cX] == 1){ //Pawns
+        if(!cap) game_notation += string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
+        else{
+            if(m_from.cX < m_to.cX){
+                if(m_from.cX+2>7 ||  (board[7 -m_from.cY][m_to.cX+2] != 1 || color[7 -m_from.cY][m_to.cX+2] != c)) game_notation += string(1, 'a' + m_to.cX) + "x" + to_string(m_to.cY+1);
+                else  game_notation += string(1, 'a' + m_from.cX) + "x" + string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
+            }
+        }
+
+    }else if(board[7 - m_to.cY][m_to.cX] == 2){ //Knights
+        game_notation += "N";
+        for(int i=0; i<7; i++){
+            for(int j=0; j<7; j++){
+                if(color[i][j] == c && board[i][j] == 2 && (i!=7-m_from.cY || j!=m_from.cX)) if((absv(7 - m_to.cY - i) == 2 && absv(m_to.cX - j) == 3) || (absv(7 - m_to.cY - i) == 2 && absv(m_to.cX - j) == 3)){
+                    game_notation += string(1, 'a' + m_from.cX);
+                    if(i == m_from.cX) game_notation += to_string(7 - m_from.cY);
+                }
+            }
+        }
+
+        if(cap) game_notation += "x";
+
+        game_notation += string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
+    }else if(board[7 - m_to.cY][m_to.cX] == 3){ //Bishops :D
+        game_notation += "B";
+        if(cap) game_notation += "x";
+        game_notation += string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
+    }else if(board[7 - m_to.cY][m_to.cX] == 4){ //Rooks :c
+        game_notation += "R";
+
+        for(int i=0; i<7; i++){
+            if(i != 7-m_from.cY && color[i][m_from.cX] == c && board[i][m_from.cX] == 4) game_notation += string(1, 'a' + m_from.cX) + to_string(7 - m_from.cY);
+        }
+
+        for(int j=0; j<7; j++){
+            if(j != m_from.cX && color[7 - m_from.cY][j] == c && board[7 - m_from.cY][j] == 4)game_notation += string(1, 'a' + m_from.cX);
+        }
+
+        if(cap) game_notation += "x";
+
+        game_notation += string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
+
+    }else if(board[7 - m_to.cY][m_to.cX] == 5){ //Queens D:
+        game_notation += "Q";
+
+        for(int i=0; i<7; i++){
+            if(i != 7-m_from.cY && color[i][m_from.cX] == c && board[i][m_from.cX] == 5) game_notation += string(1, 'a' + m_from.cX) + to_string(7 - m_from.cY);
+        }
+
+        for(int j=0; j<7; j++){
+            if(j != m_from.cX && color[7 - m_from.cY][j] == c && board[7 - m_from.cY][j] == 5) game_notation += string(1, 'a' + m_from.cX);
+        }
+
+        //Missing diagonals :p
+
+        if(cap) game_notation += "x";
+
+        game_notation += string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
+    }else if(board[7 - m_to.cY][m_to.cX] == 6){//Lord Farquad (King)
+        //Handle in castling part of things maybe? .-.
+    }
 }
 
 void GameRenderer::load_files(SDL_Renderer *rend){

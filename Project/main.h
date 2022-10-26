@@ -9,6 +9,8 @@
 #include <SDL_TTF.h>
 #include <SDL_mixer.h>
 
+#include <cstdlib>
+
 
 #include <vector>
 #include <map>
@@ -25,6 +27,8 @@
 #include "src/Engine.h"
 #include "src/BitUtil.h"
 #include "src/AudioSample.h"
+
+#define absv(x) (x<0?-x:x)
 
 using namespace std;
 
@@ -92,6 +96,9 @@ class GameRenderer{
                            {0, 0, 0, 0, 0, 0, 0, 0},
                            {1, 1, 1, 1, 1, 1, 1, 1},
                            {1, 1, 1, 1, 1, 1, 1, 1}};
+
+        string game_notation = "";
+        int current_move = 0;
         
         //Square name to array position
         //Not used
@@ -105,6 +112,8 @@ class GameRenderer{
                                               {"H1", {0,0}}, {"H2", {0,1}}, {"H3", {0,2}}, {"H4", {0,3}}, {"H5", {0,4}}, {"H6", {0,5}}, {"H7", {0,6}}, {"H8", {0,7}}
                                             };
         
+
+
         //Sprites and images used in gae
         vector<SDL_Texture *> sprites;
         SDL_Surface* window_icon;
@@ -139,6 +148,8 @@ class GameRenderer{
         void request_engine_move();
         void request_move_update();
         void send_move();
+
+        void update_notation(pair<int, int>, pair<int, int>, int, bool);
 
     public:
         //Rendererd initilizer
