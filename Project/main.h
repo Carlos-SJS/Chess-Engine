@@ -90,6 +90,12 @@ class GameRenderer{
         vector<audio_sample> audio_lose;
         vector<audio_sample> audio_draw;
 
+        int last_move_f = -1;
+        int last_move_t = -1;
+        
+        bool draw_check = 0;
+        pair<int, int> check;
+
         //Chessboard reprecentaction data 
         //0 -> void, 1 -> pawn, 2 -> knight, 3 -> bishop, 4 -> rook, 5 -> queen, 6 -> king
         int board[8][8] = {{4, 2, 3, 5, 6, 3, 2, 4},
@@ -163,6 +169,8 @@ class GameRenderer{
         void send_move();
 
         void update_notation(pair<int, int>, pair<int, int>, int, bool);
+
+        void set_draw_check(int);
 
     public:
         //Rendererd initilizer

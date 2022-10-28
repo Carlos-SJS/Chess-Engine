@@ -56,6 +56,24 @@ void GameRenderer::draw_board(SDL_Renderer *rend){
                 }
             }
 
+        if(last_move_f != -1){
+            SDL_SetRenderDrawColor(rend, 71, 137, 181, 255);
+            pair<int, int> s = sq_cd(last_move_f);
+            sq.x = LRBORDER_SIZE + s.cX*CELL_SIZE , sq.y = TDBORDER_SIZE + (7-s.cY)*CELL_SIZE, sq.h = CELL_SIZE, sq.w = CELL_SIZE;
+            SDL_RenderDrawRect(rend, &sq);
+            SDL_SetRenderDrawColor(rend, 5, 105, 156, 255);
+            s = sq_cd(last_move_t);
+            sq.x = LRBORDER_SIZE + s.cX*CELL_SIZE , sq.y = TDBORDER_SIZE + (7-s.cY)*CELL_SIZE, sq.h = CELL_SIZE, sq.w = CELL_SIZE;
+            SDL_RenderDrawRect(rend, &sq);
+        }
+
+        if(draw_check){
+            SDL_SetRenderDrawColor(rend, 148, 16, 43, 255);
+            sq.x = LRBORDER_SIZE + check.second*CELL_SIZE , sq.y = TDBORDER_SIZE + (check.first)*CELL_SIZE, sq.h = CELL_SIZE, sq.w = CELL_SIZE;
+            SDL_RenderDrawRect(rend, &sq);
+        }
+
+
         this->draw_pieces(rend);
 
         sq = {10, CELL_SIZE*8 + TDBORDER_SIZE + CELL_SIZE/10, 120, CELL_SIZE/2};
@@ -138,6 +156,9 @@ void GameRenderer::renderer_loop(){
 
                             current_move++;
 
+                            last_move_f = move_to_draw;
+                            last_move_t = moveid;
+
                             pair<int, int> m_from = sq_cd(move_to_draw);
                             pair<int, int> m_to = sq_cd(moveid);
 
@@ -148,8 +169,12 @@ void GameRenderer::renderer_loop(){
                             board[7 - m_from.cY][m_from.cX] = 0;
                             color[7 - m_from.cY][m_from.cX] = 0;
 
-                            if(engine.in_check(2, board, color)) audio_check.play();
-                            else if(ant != 0) audio_capture.play();
+                            draw_check = 0;
+
+                            if(engine.in_check(2, board, color)){
+                                audio_check.play();
+                                set_draw_check(2);
+                            }else if(ant != 0) audio_capture.play();
                             else audio_move.play();
 
                             update_notation(m_from, m_to, 1, ant!=0);
@@ -221,6 +246,9 @@ void GameRenderer::renderer_loop(){
             f = sq_cd(engine_move.first);
             t = sq_cd(engine_move.second);
 
+            last_move_f = engine_move.from;
+            last_move_t = engine_move.to;
+
             int ant = board[7 - t.first][t.second];
 
             board[7 - t.first][t.second] = board[7 - f.first][f.second];
@@ -272,9 +300,12 @@ void GameRenderer::renderer_loop(){
                 game_notation += "O-O-O";
             }else if(board[7 - m_to.cY][m_to.cX] == 6) castlingbl = 0, castlingbr = 0, game_notation += "K" + (ant!=0?string("x"):string("")) + string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
 
+            draw_check = 0;
+
             if(engine.in_check(1, board, color)){
                 audio_check.play();
                 game_notation += "+";
+                set_draw_check(1);
             }
             else if(ant!=0) audio_capture.play();
             else audio_move.play();
@@ -288,21 +319,18 @@ void GameRenderer::renderer_loop(){
 
         if(handle_white_win){
             handle_white_win = 0;
-            logger.log("Shold play something");
             rnd_e(audio_win).play();
             //Show some text
         }
 
         if(handle_black_win){
             handle_black_win = 0;
-            logger.log("Shold play something");
             rnd_e(audio_lose).play();
             //Show some text
         }
 
         if(handle_draw){
             handle_draw = 0;
-            logger.log("Shold play something");
             rnd_e(audio_draw).play();
             //Show some text
         }
@@ -326,6 +354,19 @@ void GameRenderer::renderer_loop(){
     TTF_Quit();
     // close SDL
     SDL_Quit();
+}
+
+void GameRenderer::set_draw_check(int c){
+    logger.log("Now drawing check");
+    for(int i=0; i<8; i++){
+        for(int j=0; j<8; j++){
+            if(board[i][j] == 6 && color[i][j] == c){
+                draw_check = 1;
+                check = {i, j};
+                return;
+            }
+        }
+    }
 }
 
 void GameRenderer::request_move_update(){

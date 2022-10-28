@@ -59,7 +59,7 @@ void Engine::init(){
     logger.success("Engine succesfully initialized");
 }
 
-//There is a bug with castling here
+//There was a bug with castling here but there is no bug any more :) (Not here i mean)
 bool EngineUtil::is_legal(board b, move_pair m, int c){
     if(c == 1){
         b = Generator::sim_board(b, m, c);
