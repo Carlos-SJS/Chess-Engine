@@ -57,6 +57,10 @@ bool handle_white_win = 0;
 bool handle_black_win = 0;
 bool handle_draw = 0;
 
+bool white_win = 0;
+bool black_win = 0;
+bool draw = 0;
+
 void handle_gstate(int);
 
 
@@ -64,7 +68,7 @@ class GameRenderer{
     private:
         //Constants needed for SDL stuff
         const int CELL_SIZE = 90;
-        const int TDBORDER_SIZE = (CELL_SIZE/3)*2;
+        const int TDBORDER_SIZE = CELL_SIZE;
         const int LRBORDER_SIZE = CELL_SIZE/3;
         const int SCREEN_HEIGHT = CELL_SIZE * 8 + TDBORDER_SIZE * 2;
         const int SCREEN_WIDTH = CELL_SIZE * 8 + LRBORDER_SIZE * 2;
@@ -78,8 +82,18 @@ class GameRenderer{
 
         TTF_Font* font;
         SDL_Color text_color = {220,220,220};
+
         SDL_Texture* human_text;
         SDL_Texture* bot_text;
+
+        SDL_Texture* white_win_text;
+        SDL_Texture* black_win_text;
+        SDL_Texture* draw_text;
+
+        const string BOT_PIC = "Resources/glados_potato.png";
+        const string HUMAN_PIC = "Resources/chell.png";
+        SDL_Texture* bot_pic;
+        SDL_Texture* human_pic;
 
         //Sound stuff
         audio_sample audio_move;

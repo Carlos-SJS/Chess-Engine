@@ -76,10 +76,30 @@ void GameRenderer::draw_board(SDL_Renderer *rend){
 
         this->draw_pieces(rend);
 
-        sq = {10, CELL_SIZE*8 + TDBORDER_SIZE + CELL_SIZE/10, 120, CELL_SIZE/2};
+        sq = {100, CELL_SIZE*8 + TDBORDER_SIZE + TDBORDER_SIZE/4, 120, CELL_SIZE/2};
         SDL_RenderCopy(rend, human_text, NULL, &sq);
-        sq = {10, CELL_SIZE/10, 140, CELL_SIZE/2};
+        sq = {100, TDBORDER_SIZE/4, 140, CELL_SIZE/2};
         SDL_RenderCopy(rend, bot_text, NULL, &sq);
+
+        sq = {10, CELL_SIZE*8 + TDBORDER_SIZE + TDBORDER_SIZE/10, CELL_SIZE*3/4, CELL_SIZE*3/4};
+        SDL_RenderCopy(rend, human_pic, NULL, &sq);
+        sq = {10, TDBORDER_SIZE/10, CELL_SIZE*3/4, CELL_SIZE*3/4};
+        SDL_RenderCopy(rend, bot_pic, NULL, &sq);
+
+        if(white_win){
+            sq = {CELL_SIZE*6, TDBORDER_SIZE/4, CELL_SIZE*2, CELL_SIZE/2};
+            SDL_RenderCopy(rend, white_win_text, NULL, &sq);
+        }
+
+        if(black_win){
+            sq = {CELL_SIZE*6, TDBORDER_SIZE/3, CELL_SIZE*2, CELL_SIZE/2};
+            SDL_RenderCopy(rend, black_win_text, NULL, &sq);
+        }
+
+        if(draw){
+            sq = {CELL_SIZE*6, TDBORDER_SIZE/4, 140, CELL_SIZE/2};
+            SDL_RenderCopy(rend, draw_text, NULL, &sq);
+        }
 
         if(rend_moves && !need_move_update) draw_moves(rend);
 
@@ -203,7 +223,7 @@ void GameRenderer::renderer_loop(){
                             }
                             //White castling (Left side)
                             else if(board[7 - m_to.cY][m_to.cX] == 6 && castlingwl && m_from.cX - m_to.cX == 2){
-                                logger.warning("Castling right side (white) " + to_string(m_to.cX));
+                                logger.warning("Castling left side (white) " + to_string(m_to.cX));
 
                                 castlingwl = 0;
                                 castlingwr = 0;
@@ -273,7 +293,7 @@ void GameRenderer::renderer_loop(){
 
             //black castling (Right side)
             if(board[7 - m_to.cY][m_to.cX] == 6 && castlingbr && m_to.cX - m_from.cX == 2){
-                logger.warning("Castling right side (white) " + to_string(m_to.cX));
+                logger.warning("Castling right side (black) " + to_string(m_to.cX));
 
                 castlingbl = 0;
                 castlingbr = 0;
@@ -287,7 +307,7 @@ void GameRenderer::renderer_loop(){
             }
             //Black castling (Left side)
             else if(board[7 - m_to.cY][m_to.cX] == 6 && castlingbl && m_from.cX - m_to.cX == 2){
-                logger.warning("Castling right side (white) " + to_string(m_to.cX));
+                logger.warning("Castling left side (black) " + to_string(m_to.cX));
 
                 castlingbl = 0;
                 castlingbr = 0;
@@ -411,6 +431,10 @@ void GameRenderer::set_values(SDL_Renderer *rend){
     human_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Human", text_color));
     bot_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Computer", text_color));
 
+    white_win_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Human wins!", {55, 204, 95}));
+    black_win_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Computer has won!", {204, 55, 67}));
+    draw_text = SDL_CreateTextureFromSurface(rend, TTF_RenderText_Solid(font, "Draw .-.", {116, 140, 143}));
+
     audio_move.set_file("Resources/Sound/game/move.wav");
     audio_capture.set_file("Resources/Sound/game/capture.wav");
     audio_check.set_file("Resources/Sound/game/check.wav");
@@ -501,6 +525,11 @@ void GameRenderer::load_files(SDL_Renderer *rend){
             sprites.push_back(SDL_CreateTextureFromSurface(rend, image));
         }
 
+        image = IMG_Load(BOT_PIC.c_str());
+        bot_pic = SDL_CreateTextureFromSurface(rend, image);
+        image = IMG_Load(HUMAN_PIC.c_str());
+        human_pic = SDL_CreateTextureFromSurface(rend, image);
+
         image = IMG_Load("Resources/dot.png");
         sprites.push_back(SDL_CreateTextureFromSurface(rend, image));
         image = IMG_Load("Resources/dot2.png");
@@ -553,14 +582,17 @@ void handle_gstate(int s){
     if(s == 1){
         logger.success("White has won");
         handle_white_win = 1;
+        white_win = 1;
     }
     else if(s == 2){
         logger.success("Black has won");
         handle_black_win = 1;
+        black_win = 1;
     }
     else if(s==3){
         logger.success("Draw :o");
         handle_draw = 1;
+        draw = 1;
     }else{
         logger.error("Something went wrong :c");
         return;
