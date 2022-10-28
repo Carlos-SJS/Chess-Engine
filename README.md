@@ -19,13 +19,13 @@ I cannot go into full detail about the implementation and technical details of t
 ## Interface
 The interface, as mentioned before, was created using SDL2, it is quite simple, but it gets the job done.
 
-![Game Window](https://imgur.com/rHuYJ4r)
+![Game Window](https://imgur.com/rHuYJ4r.gif)
 
 To interact with the engine, and make a move, the user has to click on the pice to move, and all the possible legal moves for the selected pice will be higligted so the user can then chose one of thos moves by clicking on them, then the move will be performed and it will be the turn of the engine (The engine can take a bit of time to chose it's move).
 
 Additionally a console window will appear when running the engine that will display some debug information aswell as the PNG notation for the current position on the board.
 
-![Console Window](https://imgur.com/a/bkx3OLE)
+![Console Window](https://imgur.com/bfXaHrO.png)
 
 ## Vide explanation
 A video explanation of the program can be found [here](link.to.video) (spanish).
