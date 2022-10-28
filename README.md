@@ -19,7 +19,7 @@ I cannot go into full detail about the implementation and technical details of t
 ## Interface
 The interface, as mentioned before, was created using SDL2, it is quite simple, but it gets the job done.
 
-![Game Window]([img]https://i.imgur.com/rHuYJ4r.gif)
+![Game Window](https://imgur.com/rHuYJ4r.gif)
 
 To interact with the engine, and make a move, the user has to click on the pice to move, and all the possible legal moves for the selected pice will be higligted so the user can then chose one of thos moves by clicking on them, then the move will be performed and it will be the turn of the engine (The engine can take a bit of time to chose it's move).
 
