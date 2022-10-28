@@ -38,6 +38,9 @@ vector<vector<int>> set_of_moves;
 int boardtc[8][8];
 int colortc[8][8];
 
+int move_count;
+string notation;
+
 bool white_left_castle;
 bool white_right_castle;
 bool black_left_castle;

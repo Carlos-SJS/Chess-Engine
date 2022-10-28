@@ -443,7 +443,7 @@ namespace Generator{
             b.white |= m.to;
 
             if(m.from.first == 0 && b.w_pieces[m.from.first][m.from.second] > (1ULL<<48)){ //Queen promotion
-                logger.warning("Queening stuff");
+                //logger.warning("Queening stuff");
                 b.w_pieces[4].push_back(m.to);
                 swap(b.w_pieces[0][m.from.second], b.w_pieces[0][b.w_pieces[0].size()-1]);
                 b.w_pieces[0].pop_back();
@@ -494,7 +494,7 @@ namespace Generator{
             b.black |= m.to;
 
             if(m.from.first == 0 && b.b_pieces[m.from.first][m.from.second] < (1ULL<<16)){ //Queen promotion
-                logger.warning("Queening stuff");
+                //logger.warning("Queening stuff");
                 b.b_pieces[4].push_back(m.to);
                 swap(b.b_pieces[0][m.from.second], b.b_pieces[0][b.b_pieces[0].size()-1]);
                 b.b_pieces[0].pop_back();

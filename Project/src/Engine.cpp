@@ -10,6 +10,8 @@ Engine::Engine(){
 void Engine::init(){
     logger.log("Initializig Engine");
     Generator::load_data();
+
+    srand(time(NULL));
     
     /*ifstream bbsq(BBOARD_SQUARE_FILE);
     if(bbsq.fail()){
@@ -19,8 +21,41 @@ void Engine::init(){
     for(int i=0; i<64; i++){
         bbsq >> ign >> b;
         bboard_square[b] = i;
-    }*/    
+    }*/
 
+    logger.log("Loading opening book...");
+
+    ifstream opb(OPENNING_BOOK_FILE);
+    if(opb.fail()){
+        logger.error("Couldn't load opening book \"" + OPENNING_BOOK_FILE + "\"");
+    }
+
+    string x, k = "";
+    int n;
+    int ct = 0;
+    while(!opb.eof()){
+        while(opb >> x){
+            if(x == ">"){
+                break;
+            }
+            k += " " + x;
+        }
+        try{
+            k = k.substr(3);
+            //logger.log("\"" + k + "\"");
+            
+            opb >> n;
+            opening_book[k].resize(n);
+
+            for(int i=0; i<n; i++) opb >> opening_book[k][i];
+            ct++;
+        } catch(...){
+            logger.error("Error loading opening book: bad key \"" + k + "\"");
+        }
+        
+        k = "";
+    }
+    logger.log("Opening book loaded, " + to_string(ct) + " positions registered");
     logger.success("Engine succesfully initialized");
 }
 
@@ -163,6 +198,128 @@ pair<int, int> Engine::get_engine_move(int cboard[8][8], int color[8][8], bool w
     else return {bb_sq(b.b_pieces[moves.moves[best].from.first][moves.moves[best].from.second]) ,bb_sq(best_to)}; 
 }
 
+pair<int, int> Engine::opening_lookup(int cboard[8][8], int color[8][8], string notation){
+    //Check if position is in openning book
+    //Return the move if it is, returns pair(-1, -1) if it isn't
+    if(opening_book.find(notation) != opening_book.end()){
+        string move_s = rnd_e(opening_book[notation]);
+
+        logger.log("Position found, selected response: \"" + move_s + "\"");
+
+        pair<int, int> move;
+        move.to = (move_s[move_s.size()-2]-'a') + ((move_s[move_s.size()-1]-'1') << 3);
+
+        if(move_s[0] == 'N'){ //Knight
+            int stcol = (move_s[move_s.size()-2]-'a');
+            move_s = move_s.substr(0, move_s.size()-2+(move_s[move_s.size()-3] == 'x'?1:0));
+            if(move_s.size() == 1){
+                pair<int, int> t = sq_cd(move.to);
+                logger.log("To: " + to_string(t.cY) + ", " + to_string(t.cX));
+                if(valid(7-(t.cY-2), t.cX-1) && cboard[7-(t.cY-2)][t.cX-1] == 2 && color[7-(t.cY-2)][t.cX-1] == 2) move.from = ((t.cY-2)<<3) + t.cX-1;
+                if(valid(7-(t.cY-2), t.cX+1) && cboard[7-(t.cY-2)][t.cX+1] == 2 && color[7-(t.cY-2)][t.cX+1] == 2) move.from = ((t.cY-2)<<3) + t.cX+1;
+
+                if(valid(7-(t.cY+2), t.cX-1) && cboard[7-(t.cY+2)][t.cX-1] == 2 && color[7-(t.cY+2)][t.cX-1] == 2) move.from = ((t.cY+2)<<3) + t.cX-1;
+                if(valid(7-(t.cY+2), t.cX+1) && cboard[7-(t.cY+2)][t.cX+1] == 2 && color[7-(t.cY+2)][t.cX+1] == 2) move.from = ((t.cY+2)<<3) + t.cX+1;
+
+                if(valid(7-(t.cY-1), t.cX-2) && cboard[7-(t.cY-1)][t.cX-2] == 2 && color[7-(t.cY-1)][t.cX-2] == 2) move.from = ((t.cY-1)<<3) + t.cX-2;
+                if(valid(7-(t.cY-1), t.cX+2) && cboard[7-(t.cY-1)][t.cX+2] == 2 && color[7-(t.cY-1)][t.cX+2] == 2) move.from = ((t.cY-1)<<3) + t.cX+2;
+
+                if(valid(7-(t.cY+1), t.cX-2) && cboard[7-(t.cY+1)][t.cX-2] == 2 && color[7-(t.cY+1)][t.cX-2] == 2) move.from = ((t.cY+1)<<3) + t.cX-2;
+                if(valid(7-(t.cY+1), t.cX+2) && cboard[7-(t.cY+1)][t.cX+2] == 2 && color[7-(t.cY+1)][t.cX+2] == 2) move.from = ((t.cY+1)<<3) + t.cX+2;
+
+                return move;
+            }else if(move_s.size() == 2){
+                pair<int, int> t = sq_cd(move.to);
+                int fx = move_s[1]-'a';
+                int dif = (absv(fx - stcol)==2?1:2);
+                if(valid(7-(t.cY-dif), fx) && cboard[7-(t.cY-dif)][fx] == 2 && color[7-(t.cY-dif)][fx] == 2) move.from = ((t.cY-dif)<<3) + fx;
+                else if(valid(7-(t.cY+dif), fx) && cboard[7-(t.cY+dif)][fx] == 2 && color[7-(t.cY+dif)][fx] == 2) move.from = ((t.cY+dif)<<3) + fx;
+                
+                return move;
+            }else{
+                move.from = (move_s[1]-'a') + ((move_s[1]-'1') << 3);
+                return move;
+            }
+        }else if(move_s[0] == 'B'){ //Bishop
+            for(int i=0; i<8; i++)
+                for(int j=0; j<8; j++)
+                    if(cboard[i][j] == 3 && color[i][j] == 2 && absv(i - (move_s[move_s.size()-1]-'1')) == absv(j - (move_s[move_s.size()-2]-'a'))){
+                        move.from = ((7-i)<<3) + j;
+                        return  move;
+                    }
+        }else if(move_s[0] == 'R'){ //Rook
+            move_s = move_s.substr(0, move_s.size()-2+(move_s[move_s.size()-3] == 'x'?1:0));
+            if(move_s.size() == 1){
+                pair<int, int> t = sq_cd(move.to);
+
+                for(int i=0; i<(7-t.cY); i++)
+                    if(cboard[i][t.cX] == 5 && color[i][t.cX] == 2){
+                        move.from = ((7-i)<<3) + t.cX;
+                        return move;
+                    }else if(cboard[i][t.cX] != 0) break;
+
+                for(int i=(7-t.cY)+1; i<8; i++)
+                    if(cboard[i][t.cX] == 5 && color[i][t.cX] == 2){
+                        move.from = ((7-i)<<3) + t.cX;
+                        return move;
+                    }else if(cboard[i][t.cX] != 0) break;
+
+                for(int j=0; j<t.cX; j++)
+                    if(cboard[7-t.cY][j] == 5 && color[7-t.cY][j] == 2){
+                        move.from = ((7-t.cY)<<3) + j;
+                        return move;
+                    }else if(cboard[7-t.cY][j] != 0) break;
+                
+                for(int j=t.cX+1; j<8; j++)
+                    if(cboard[7-t.cY][j] == 5 && color[7-t.cY][j] == 2){
+                        move.from = ((7-t.cY)<<3) + j;
+                        return move;
+                    }else if(cboard[7-t.cY][j] != 0) break;
+
+            }else if(move_s.size() == 2){
+                int fx = move_s[1]-'a';
+                for(int i=0; i<8; i++)
+                    if(cboard[i][fx] == 4 && color[7-1][fx] == 2){
+                        move.from = fx + ((7-i)<<3);
+                        return move;
+                    }
+            }else{
+                move.from = (move_s[1]-'a') + ((move_s[1]-'1') << 3);
+                return move;
+            }
+        }else if(move_s[0] == 'Q'){ //Queen
+            for(int i=0; i<8; i++)
+                for(int j=0; j<8; j++)
+                    if(cboard[i][j] == 5 && color[i][j] == 2){
+                        move.from = ((7-i)<<3) + j;
+                        return  move;
+                    }
+        }else if(move_s[0] == 'K'){ //King
+            for(int i=0; i<8; i++)
+                for(int j=0; j<8; j++)
+                    if(cboard[i][j] == 6 && color[i][j] == 2){
+                        move.from = ((7-i)<<3) + j;
+                        return  move;
+                    }
+        }else if(move_s == "o-o"){
+
+        }else if(move_s == "o-o-o"){
+        
+        }else{ //Pawn
+            int col = move_s[0]-'a';
+            for(int i=0; i<8; i++){
+                if(cboard[i][col] == 1 && color[i][col] == 2){
+                    move.from = ((7-i)<<3) + col;
+                    return move;
+                }
+            }
+            logger.log("Pawn not found :c (" + to_string(col) + ")");
+        }
+    }else logger.warning("Position not found");
+
+    return make_pair(-1, -1);
+}
+
 int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
 
     if(depth == 0){
@@ -180,7 +337,6 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         boolean cutoff=0;
 
         moveset moves = Generator::get_moves_w(bd);
-        if(EngineUtil::move_count(bd, 1) == 0) value = 0;
 
         //Could use move ordering euristcs here
         for(auto it = moves.captures.begin(); it!=moves.captures.end() && !cutoff; it++){
@@ -204,6 +360,8 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
                 clearb(move.to, lsb(move.to));
             }
         }
+
+        //if(EngineUtil::move_count(bd, 1) == 0 && value != INT_MIN) value = max(0, value);
        
         return value;
     }else{
@@ -211,7 +369,6 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
         boolean cutoff=0;
         
         moveset moves = Generator::get_moves_b(bd);
-        if(EngineUtil::move_count(bd, 2) == 0) value = 0;
 
 
         //Could use move ordering euristcs here
@@ -236,6 +393,8 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
                 clearb(move.to, lsb(move.to));
             }
         }
+
+        //if(EngineUtil::move_count(bd, 2) == 0 && value != INT_MAX) value = min(0, value);
         return value;
     }
 }

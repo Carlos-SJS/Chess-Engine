@@ -341,6 +341,9 @@ void GameRenderer::request_engine_move(){
     engine_move_flag = 1;
     waiting_engine_move = 1;
     turn = 1;
+
+    move_count = current_move;
+    notation = game_notation;
 }
 
 void GameRenderer::set_values(SDL_Renderer *rend){
@@ -356,23 +359,18 @@ void GameRenderer::set_values(SDL_Renderer *rend){
 void GameRenderer::update_notation(pair<int, int> m_from, pair<int, int> m_to, int c, bool cap){
     //Notation managment
     
-    if(c == 1) game_notation += (current_move>0?string(" "):string("")) + to_string(current_move) + ". ";
+    if(c == 1) game_notation += (current_move>1?string(" "):string("")) + to_string(current_move) + ". ";
     else game_notation += " ";
 
     if(board[7 - m_to.cY][m_to.cX] == 1){ //Pawns
         if(!cap) game_notation += string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
-        else{
-            if(m_from.cX < m_to.cX){
-                if(m_from.cX+2>7 ||  (board[7 -m_from.cY][m_to.cX+2] != 1 || color[7 -m_from.cY][m_to.cX+2] != c)) game_notation += string(1, 'a' + m_to.cX) + "x" + to_string(m_to.cY+1);
-                else  game_notation += string(1, 'a' + m_from.cX) + "x" + string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
-            }
-        }
+        else game_notation += string(1, 'a' + m_from.cX) + "x" + string(1, 'a' + m_to.cX) + to_string(m_to.cY+1);
 
     }else if(board[7 - m_to.cY][m_to.cX] == 2){ //Knights
         game_notation += "N";
         for(int i=0; i<7; i++){
             for(int j=0; j<7; j++){
-                if(color[i][j] == c && board[i][j] == 2 && (i!=7-m_from.cY || j!=m_from.cX)) if((absv(7 - m_to.cY - i) == 2 && absv(m_to.cX - j) == 3) || (absv(7 - m_to.cY - i) == 2 && absv(m_to.cX - j) == 3)){
+                if(color[i][j] == c && board[i][j] == 2 && (i!=7-m_to.cY || j!=m_to.cX)) if((absv(7 - m_to.cY - i) == 1 && absv(m_to.cX - j) == 2) || (absv(7 - m_to.cY - i) == 2 && absv(m_to.cX - j) == 1)){
                     game_notation += string(1, 'a' + m_from.cX);
                     if(i == m_from.cX) game_notation += to_string(7 - m_from.cY);
                 }
@@ -390,11 +388,13 @@ void GameRenderer::update_notation(pair<int, int> m_from, pair<int, int> m_to, i
         game_notation += "R";
 
         for(int i=0; i<7; i++){
-            if(i != 7-m_from.cY && color[i][m_from.cX] == c && board[i][m_from.cX] == 4) game_notation += string(1, 'a' + m_from.cX) + to_string(7 - m_from.cY);
+            if(i != 7-m_to.cY && color[i][m_from.cX] == c && board[i][m_from.cX] == 4) game_notation += string(1, 'a' + m_from.cX) + to_string(7 - m_from.cY);
         }
 
         for(int j=0; j<7; j++){
-            if(j != m_from.cX && color[7 - m_from.cY][j] == c && board[7 - m_from.cY][j] == 4)game_notation += string(1, 'a' + m_from.cX);
+            if(j != m_to.cX && color[7 - m_from.cY][j] == c && board[7 - m_from.cY][j] == 4){
+                game_notation += string(1, 'a' + m_from.cX);
+            }
         }
 
         if(cap) game_notation += "x";
@@ -405,11 +405,11 @@ void GameRenderer::update_notation(pair<int, int> m_from, pair<int, int> m_to, i
         game_notation += "Q";
 
         for(int i=0; i<7; i++){
-            if(i != 7-m_from.cY && color[i][m_from.cX] == c && board[i][m_from.cX] == 5) game_notation += string(1, 'a' + m_from.cX) + to_string(7 - m_from.cY);
+            if(i != 7-m_to.cY && color[i][m_from.cX] == c && board[i][m_from.cX] == 5) game_notation += string(1, 'a' + m_to.cX) + to_string(7 - m_from.cY);
         }
 
         for(int j=0; j<7; j++){
-            if(j != m_from.cX && color[7 - m_from.cY][j] == c && board[7 - m_from.cY][j] == 5) game_notation += string(1, 'a' + m_from.cX);
+            if(j != m_to.cX && color[7 - m_from.cY][j] == c && board[7 - m_from.cY][j] == 5) game_notation += string(1, 'a' + m_from.cX);
         }
 
         //Missing diagonals :p
@@ -526,6 +526,19 @@ int main(int argc, char *argv[]){
             if(state != 0){
                 handle_gstate(state);
             }else{
+                //Try to consult the opening book if we are in the first 5 moves of the game
+                if(move_count <= 5){
+                    pair<int, int> opening_move = engine.opening_lookup(boardtc, colortc, notation);
+                    logger.log(to_string(opening_move.from) + ", " + to_string(opening_move.to));
+                    if(opening_move.from != -1){
+                        logger.log("Position found in opening book");
+
+                        engine_move = opening_move;
+                        engine_move_flag  = 0;
+                        continue;
+                    }
+                }
+
                 engine_move = engine.get_engine_move(boardtc, colortc, white_left_castle, white_right_castle, black_left_castle, black_right_castle);
                 engine_move_flag = 0;
             }
