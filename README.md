@@ -37,6 +37,7 @@ Chess programming concepts:
 - [Chess Programming series] (http://archive.gamedev.net/archive/reference/articles/article1014.html) by François Dominic Laramée
 - [Magic Bitboards](https://www.youtube.com/watch?v=4ohJQ9pCkHI&t=334s) (Chess programming YouTube channel)
 - [Alpha-Beta prunning](https://en.wikipedia.org/wiki/Alpha–beta_pruning) (Wikipedia)
+- [Coding Adventure: Chess AI](https://www.youtube.com/watch?v=U4ogK0MIzqk&t=1s) Sebastian's League YouTube Video
 
 Other resources
 - [GLaDOS voice](https://glados.c-net.org)
