@@ -27,7 +27,7 @@ Additionally a console window will appear when running the engine that will disp
 
 ![Console Window](https://imgur.com/bfXaHrO.png)
 
-## Vide explanation
+## Video explanation
 A video explanation of the program can be found [here](link.to.video) (spanish).
 
 ## Resources
