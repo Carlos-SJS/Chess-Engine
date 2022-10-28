@@ -11,7 +11,7 @@
 #include "BitUtil.h"
 
 #define rnd_e(x) (x[rand() % x.size()]) 
-#define absv(x) (x<0?-x:x)
+#define absv(x) ((x)<0?-(x):(x))
 #define valid(x, y) (x>=0 && y>=0 && x<8 && y <8)
 
 using namespace std;

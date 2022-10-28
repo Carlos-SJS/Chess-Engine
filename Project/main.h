@@ -10,7 +10,7 @@
 #include <SDL_mixer.h>
 
 #include <cstdlib>
-
+#include <time.h> 
 
 #include <vector>
 #include <map>
@@ -28,7 +28,8 @@
 #include "src/BitUtil.h"
 #include "src/AudioSample.h"
 
-#define absv(x) (x<0?-x:x)
+#define absv(x) ((x)<0?-(x):(x))
+#define rnd_e(x) (x[rand() % x.size()]) 
 
 using namespace std;
 
@@ -48,8 +49,13 @@ bool black_right_castle;
 
 pair<int, int> engine_move;
 
+//Thread flags
 bool calculate_moves_flag = 1;
 bool engine_move_flag = 0;
+
+bool handle_white_win = 0;
+bool handle_black_win = 0;
+bool handle_draw = 0;
 
 void handle_gstate(int);
 
@@ -79,6 +85,10 @@ class GameRenderer{
         audio_sample audio_move;
         audio_sample audio_capture;
         audio_sample audio_check;
+
+        vector<audio_sample> audio_win;
+        vector<audio_sample> audio_lose;
+        vector<audio_sample> audio_draw;
 
         //Chessboard reprecentaction data 
         //0 -> void, 1 -> pawn, 2 -> knight, 3 -> bishop, 4 -> rook, 5 -> queen, 6 -> king

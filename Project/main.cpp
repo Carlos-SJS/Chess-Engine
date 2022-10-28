@@ -279,12 +279,32 @@ void GameRenderer::renderer_loop(){
             else if(ant!=0) audio_capture.play();
             else audio_move.play();
 
-
             logger.log(game_notation);
 
             turn = 0;
             waiting_engine_move = 0;
             request_move_update();
+        }
+
+        if(handle_white_win){
+            handle_white_win = 0;
+            logger.log("Shold play something");
+            rnd_e(audio_win).play();
+            //Show some text
+        }
+
+        if(handle_black_win){
+            handle_black_win = 0;
+            logger.log("Shold play something");
+            rnd_e(audio_lose).play();
+            //Show some text
+        }
+
+        if(handle_draw){
+            handle_draw = 0;
+            logger.log("Shold play something");
+            rnd_e(audio_draw).play();
+            //Show some text
         }
 
         draw_board(rend);
@@ -354,6 +374,10 @@ void GameRenderer::set_values(SDL_Renderer *rend){
     audio_capture.set_file("Resources/Sound/game/capture.wav");
     audio_check.set_file("Resources/Sound/game/check.wav");
 
+    for(int i=1; i<=4; i++) audio_win.push_back(audio_sample("Resources/Sound/friendly_lines/win" + to_string(i) + ".wav"));
+    for(int i=1; i<=3; i++) audio_lose.push_back(audio_sample("Resources/Sound/friendly_lines/lose" + to_string(i) + ".wav"));
+    for(int i=1; i<=3; i++) audio_draw.push_back(audio_sample("Resources/Sound/friendly_lines/tie" + to_string(i) + ".wav"));
+
 }
 
 void GameRenderer::update_notation(pair<int, int> m_from, pair<int, int> m_to, int c, bool cap){
@@ -368,9 +392,9 @@ void GameRenderer::update_notation(pair<int, int> m_from, pair<int, int> m_to, i
 
     }else if(board[7 - m_to.cY][m_to.cX] == 2){ //Knights
         game_notation += "N";
-        for(int i=0; i<7; i++){
-            for(int j=0; j<7; j++){
-                if(color[i][j] == c && board[i][j] == 2 && (i!=7-m_to.cY || j!=m_to.cX)) if((absv(7 - m_to.cY - i) == 1 && absv(m_to.cX - j) == 2) || (absv(7 - m_to.cY - i) == 2 && absv(m_to.cX - j) == 1)){
+        for(int i=0; i<8; i++){
+            for(int j=0; j<8; j++){
+                if(color[i][j] == c && board[i][j] == 2 && (i!=7-m_to.cY || j!=m_to.cX)) if((absv((7 - m_to.cY) - i) == 1 && absv(m_to.cX - j) == 2) || (absv((7 - m_to.cY) - i) == 2 && absv(m_to.cX - j) == 1)){
                     game_notation += string(1, 'a' + m_from.cX);
                     if(i == m_from.cX) game_notation += to_string(7 - m_from.cY);
                 }
@@ -466,6 +490,8 @@ void GameRenderer::copy_matrix(){
 
 void GameRenderer::init(){
     try{
+        srand(time(NULL));
+
         copy_matrix();
 
         turn = 0;
@@ -483,11 +509,21 @@ void* run_renderer(void* arg){
 }
 
 void handle_gstate(int s){
-    if(s == 1) logger.success("White has won");
-    else if(s == 2) logger.success("Black has won");
-    else if(s==3) logger.success("Draw :o");
-    else logger.error("Something went wrong :c");
-
+    if(s == 1){
+        logger.success("White has won");
+        handle_white_win = 1;
+    }
+    else if(s == 2){
+        logger.success("Black has won");
+        handle_black_win = 1;
+    }
+    else if(s==3){
+        logger.success("Draw :o");
+        handle_draw = 1;
+    }else{
+        logger.error("Something went wrong :c");
+        return;
+    }
     while(true);
 }
 
