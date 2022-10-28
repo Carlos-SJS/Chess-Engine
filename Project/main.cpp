@@ -402,7 +402,7 @@ void GameRenderer::request_move_update(){
     black_left_castle = castlingbl;
     black_right_castle = castlingbr; 
 
-    logger.log("Casling wl(" + to_string(castlingwl) + "), Castling wr(" + to_string(castlingwr) + ")");
+    //logger.log("Casling wl(" + to_string(castlingwl) + "), Castling wr(" + to_string(castlingwr) + ")");
 
     calculate_moves_flag = 1;
 }

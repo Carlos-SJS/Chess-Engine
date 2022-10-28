@@ -75,19 +75,19 @@ bool EngineUtil::is_legal(board b, move_pair m, int c){
 }
 
 vector<vector<int>> Engine::getMoves(int cboard[8][8], int color[8][8],  bool white_lc, bool white_rc, bool black_lc, bool black_rc){
-    logger.log("Calculating moves for white player");
+    //logger.log("Calculating moves for white player");
 
     board b = Generator::array_to_board(cboard, color, white_lc, white_rc, black_lc, black_rc);
 
     //if(__builtin_popcount(b.white|b.black) < 10) SEARCH_DEEPNESS = 5;
     //else SEARCH_DEEPNESS = 3;
 
-    logger.log("Getting moves");
+    //logger.log("Getting moves");
     moveset moves = Generator::get_moves_w(b);
 
     vector<vector<int>> move_list(64);
     
-    logger.log("Converting moves");
+    //logger.log("Converting moves");
     for(int i=0; i<moves.moves.size(); i++){
         int piece = bb_sq(b.w_pieces[moves.moves[i].from.first][moves.moves[i].from.second]);
         bitboard move = moves.moves[i].to;
@@ -361,7 +361,7 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
             }
         }
 
-        //if(EngineUtil::move_count(bd, 1) == 0 && value != INT_MIN) value = max(0, value);
+        if(EngineUtil::move_count(bd, 1) == 0 && value != INT_MIN) return 0;
        
         return value;
     }else{
@@ -394,7 +394,7 @@ int Search::alphabeta(board bd, int depth, int alpha, int beta, bool maximize){
             }
         }
 
-        //if(EngineUtil::move_count(bd, 2) == 0 && value != INT_MAX) value = min(0, value);
+        if(EngineUtil::move_count(bd, 2) == 0 && value != INT_MAX) return 0;
         return value;
     }
 }

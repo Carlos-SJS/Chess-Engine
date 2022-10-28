@@ -67,7 +67,7 @@ void handle_gstate(int);
 class GameRenderer{
     private:
         //Constants needed for SDL stuff
-        const int CELL_SIZE = 90;
+        const int CELL_SIZE = 100;
         const int TDBORDER_SIZE = CELL_SIZE;
         const int LRBORDER_SIZE = CELL_SIZE/3;
         const int SCREEN_HEIGHT = CELL_SIZE * 8 + TDBORDER_SIZE * 2;
